@@ -38,7 +38,6 @@ public class EasyConvertAvExports extends AbstractCommandLineAppJava8<EasyConver
 
     @Override
     public void configureCommandLine(CommandLine commandLine, EasyConvertAvExportsConfig config) {
-        // TODO: set up the API client, if applicable
         log.debug("Configuring command line");
         // TODO: add options and subcommands
     }

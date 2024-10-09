@@ -43,7 +43,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-
 @Slf4j
 public abstract class AbstractCommandLineAppJava8<C extends Configuration> implements Callable<Integer> {
     // copy-pasted because the library version imports io.dropwizard.core.Configuration

@@ -17,7 +17,16 @@
 package nl.knaw.dans.avexports.config;
 
 import io.dropwizard.Configuration;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
 public class EasyConvertAvExportsConfig extends Configuration {
-  // TODO: add configuration fields
+    @Valid
+    @NotNull
+    private SourcesConfig sources;
 }
