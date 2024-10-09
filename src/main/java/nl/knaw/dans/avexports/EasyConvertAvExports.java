@@ -17,10 +17,8 @@
 package nl.knaw.dans.avexports;
 
 import lombok.extern.slf4j.Slf4j;
-import nl.knaw.dans.lib.util.AbstractCommandLineApp;
-import nl.knaw.dans.lib.util.PicocliVersionProvider;
 import nl.knaw.dans.avexports.config.EasyConvertAvExportsConfig;
-import picocli.AutoComplete.GenerateCompletion;
+import nl.knaw.dans.lib.util.PicocliVersionProvider;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
@@ -29,7 +27,7 @@ import picocli.CommandLine.Command;
          versionProvider = PicocliVersionProvider.class,
          description = "Converts bags exported by easy-fedora-to-bag to bags with AV data")
 @Slf4j
-public class EasyConvertAvExports extends AbstractCommandLineApp<EasyConvertAvExportsConfig> {
+public class EasyConvertAvExports extends AbstractCommandLineAppJava8<EasyConvertAvExportsConfig> {
     public static void main(String[] args) throws Exception {
         new EasyConvertAvExports().run(args);
     }

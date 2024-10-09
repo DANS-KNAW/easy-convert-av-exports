@@ -23,13 +23,13 @@
     <parent>
         <groupId>nl.knaw.dans</groupId>
         <artifactId>dd-parent</artifactId>
-        <version>1.9.0</version>
+        <version>0.21.0</version>
     </parent>
 
     <artifactId>easy-convert-av-exports</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 
-    <name>Easy Convert Av Exports</name>
+    <name>EASY Convert AV Exports</name>
     <url>https://github.com/DANS-KNAW/easy-convert-av-exports</url>
     <description>Converts bags exported by easy-fedora-to-bag to bags with AV data</description>
     <inceptionYear>2024</inceptionYear>
@@ -49,11 +49,12 @@
         <dependency>
             <groupId>nl.knaw.dans</groupId>
             <artifactId>dans-java-utils</artifactId>
-            <version>0.18.0</version>
+            <version>0.19.0</version>
         </dependency>
         <dependency>
             <groupId>nl.knaw.dans</groupId>
             <artifactId>dans-validation-lib</artifactId>
+            <version>0.3.0</version>
         </dependency>
         <dependency>
             <groupId>commons-beanutils</groupId>
@@ -62,14 +63,17 @@
         <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
+            <version>${picocli.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
+            <version>2.1.5</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-client</artifactId>
+            <version>2.1.5</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -79,34 +83,26 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
         </dependency>
-        <!-- Only required if this CLI connects to a OpenAPI generated service -->
-        <!--
         <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-client</artifactId>
+            <groupId>nl.knaw.dans</groupId>
+            <artifactId>dans-bagit-lib</artifactId>
+            <version>1.2.0</version>
         </dependency>
         <dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-json-jackson</artifactId>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.8</version>
         </dependency>
         <dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-multipart</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.activation</groupId>
-            <artifactId>activation</artifactId>
-            <version>1.1.1</version>
-        </dependency>
-        -->
     </dependencies>
 
     <repositories>
@@ -168,14 +164,34 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+            <!-- Overriding dans-nexus-maven-plugin configuration, to fix the http -> https URL. We cannot do that by upgrading to a newer version of the parent
+              POM, because that would require upgrading to DropWizard 3.x, which is compiled with Java 11. -->
             <plugin>
                 <groupId>nl.knaw.dans</groupId>
                 <artifactId>dans-nexus-maven-plugin</artifactId>
+                <version>${dans-nexus-maven-plugin.version}</version>
+                <configuration>
+                    <nexusUserName>${env.NEXUS_USER}</nexusUserName>
+                    <nexusPassword>${env.NEXUS_PASSWORD}</nexusPassword>
+                    <rpmRepositoryUrl>https://nexus.dans.knaw.nl/repository/rpm-releases</rpmRepositoryUrl>
+                    <snapshotRpmRepositoryUrl>https://nexus.dans.knaw.nl/repository/rpm-snapshots</snapshotRpmRepositoryUrl>
+                </configuration>
+                <executions>
+                    <execution>
+                        <!-- Use default phase: deploy -->
+                        <goals>
+                            <goal>deploy-rpm</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
                 <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
                     <annotationProcessorPaths combine.children="append">
                         <path>
                             <groupId>info.picocli</groupId>

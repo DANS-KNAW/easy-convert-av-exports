@@ -16,7 +16,7 @@
 
 package nl.knaw.dans.avexports.config;
 
-import io.dropwizard.core.Configuration;
+import io.dropwizard.Configuration;
 
 public class EasyConvertAvExportsConfig extends Configuration {
   // TODO: add configuration fields
