@@ -16,7 +16,6 @@
 package nl.knaw.dans.avexports.core;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -27,22 +26,22 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.function.Predicate;
 
 public class XmlUtil {
+    private static final XPathFactory xPathFactory = XPathFactory.newInstance();
+
     public static Document readXml(Path path) throws ParserConfigurationException, IOException, SAXException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -65,28 +64,10 @@ public class XmlUtil {
             .parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
     }
 
-    public static Predicate<Element> hasFilePathIn(List<Path> filepaths) {
-        return element -> filepaths.contains(Paths.get(element.getAttribute("filepath")));
-    }
-
-    public static boolean isAccessibleToNone(Node fileElement) {
-        return isNone(fileElement, "accessibleToRights");
-    }
-
-    public static boolean isVisibleToNone(Node fileElement) {
-        return isNone(fileElement, "visibleToRights");
-    }
-
-    public static boolean isNone(Node fileElement, String tag) {
-        NodeList elements = ((Element) fileElement).getElementsByTagName(tag);
-        if (elements.getLength() == 0)
-            return true;
-        return "NONE".equals(elements.item(0).getTextContent());
-    }
-
-    public static void writeFilesXml(Path bagDir, Document filesXml) throws IOException, TransformerException {
-        Writer writer = new FileWriter(bagDir.resolve("metadata").resolve("files.xml").toFile());
-        getTransformer().transform(new DOMSource(filesXml), new StreamResult(writer));
+    public static Node getByXPath(Node node, String xpath) throws XPathExpressionException {
+        XPath path = xPathFactory.newXPath();
+        path.setNamespaceContext(XmlNamespacesContext.getInstance());
+        return (Node) path.compile(xpath).evaluate(node, XPathConstants.NODE);
     }
 
     private static Transformer getTransformer() throws TransformerConfigurationException {

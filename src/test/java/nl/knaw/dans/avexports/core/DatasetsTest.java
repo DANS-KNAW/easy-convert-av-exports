@@ -17,6 +17,7 @@ package nl.knaw.dans.avexports.core;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,13 +27,13 @@ public class DatasetsTest {
     @Test
     public void ctor_should_find_all_dataset_ids_in_input() throws Exception {
         Datasets datasets = new Datasets(Paths.get("src/test/resources/integration/input-bags"));
-//        assertThat(datasets.getDatasetIds()).containsExactlyInAnyOrder(
-//            "easy-dataset:121282",
-//            "easy-dataset:218800",
-//            "easy-dataset:41418",
-//            "easy-dataset:121282",
-//            "easy-dataset:155170"
-//        );
+        assertThat(datasets.getDatasetIds()).containsExactlyInAnyOrder(
+            "easy-dataset:218800",
+            "easy-dataset:41418",
+            "easy-dataset:121282",
+            "easy-dataset:155170",
+            "easy-dataset:112582"
+        );
     }
 
 }

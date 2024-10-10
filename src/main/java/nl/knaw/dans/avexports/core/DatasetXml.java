@@ -16,11 +16,11 @@
 package nl.knaw.dans.avexports.core;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -31,8 +31,17 @@ public class DatasetXml {
         this.document = XmlUtil.readXml(path);
     }
 
-    public String getDatasetId() {
-        return document.getElementsByTagName("datasetId").item(0).getTextContent();
+    // For testing purposes
+    DatasetXml(String xml) throws ParserConfigurationException, IOException, SAXException {
+        this.document = XmlUtil.readXmlFromString(xml);
+    }
+
+    public String getDatasetId() throws XPathExpressionException {
+        Node attr = XmlUtil.getByXPath(document, "/ddm:DDM/ddm:dcmiMetadata/dct:identifier[@xsi:type='id-type:EASY2']");
+        if (attr == null) {
+            throw new IllegalStateException("No datasetId found in the dataset.xml");
+        }
+        return attr.getTextContent();
     }
 
 }

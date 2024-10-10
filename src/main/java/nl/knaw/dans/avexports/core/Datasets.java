@@ -54,8 +54,16 @@ public class Datasets {
 
     private String findDatasetId(Path bagParent) {
         checkOneSubdirectory(bagParent);
-
-
+        Path bagDir = getBagDir(bagParent);
+        Path datasetXml = bagDir.resolve("metadata/dataset.xml");
+        if (Files.exists(datasetXml)) {
+            try {
+                return new DatasetXml(datasetXml).getDatasetId();
+            }
+            catch (Exception e) {
+                throw new RuntimeException("Error while reading dataset.xml in " + bagDir, e);
+            }
+        }
         return null;
     }
 
@@ -68,6 +76,15 @@ public class Datasets {
             else if (count == 0) {
                 throw new IllegalStateException("No dirs found in " + bagParent);
             }
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Error while reading " + bagParent, e);
+        }
+    }
+
+    private Path getBagDir(Path bagParent) {
+        try (Stream<Path> paths = Files.list(bagParent).filter(Files::isDirectory).filter(f -> !f.equals(bagParent))) {
+            return paths.findFirst().orElseThrow(() -> new IllegalStateException("No directories found in " + bagParent));
         }
         catch (IOException e) {
             throw new RuntimeException("Error while reading " + bagParent, e);
