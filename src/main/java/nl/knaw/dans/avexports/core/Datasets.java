@@ -43,6 +43,7 @@ public class Datasets {
             bagParents.forEach(bagParent -> {
                 String datasetId = findDatasetId(bagParent);
                 List<Path> bags = idToBagPaths.getOrDefault(datasetId, new ArrayList<>());
+                bags.add(bagParent);
                 idToBagPaths.put(datasetId, bags);
                 if (idToBagPaths.get(datasetId).size() > 2) {
                     throw new IllegalStateException("More than 2 bags found for dataset id " + datasetId);

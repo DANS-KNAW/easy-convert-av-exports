@@ -16,19 +16,43 @@
 package nl.knaw.dans.avexports.core;
 
 import lombok.Builder;
+import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Path;
 
 /**
  * Converts the bag(s) exported for one AV dataset to a bag with AV data.
  */
+@Slf4j
 @Builder
 public class AvDatasetConverter {
     private final Path inputDir;
     private final Path outputDir;
+    private final Sources sources;
 
-    public void convert() {
+    public void convert() throws Exception {
+        Datasets datasets = new Datasets(inputDir);
 
+        for (String easyDatasetId: datasets.getDatasetIds()) {
+            if (sources.hasSpringfieldFiles(easyDatasetId)) {
+               if (datasets.getBagsForDataset(easyDatasetId).size() == 1) {
+                   log.info("Only one bag found for dataset id {}. Creating second version bag...", easyDatasetId);
+               }
+               for (String springfieldFileId: sources.getSpringfieldPathsByDatasetId(easyDatasetId)) {
+                   // Copy files to outputDir
+
+
+                   // Modify entry in files.xml
+
+               }
+
+            }
+
+            // Remove empty files
+
+
+            // Update bag manifests
+
+        }
     }
-
 }

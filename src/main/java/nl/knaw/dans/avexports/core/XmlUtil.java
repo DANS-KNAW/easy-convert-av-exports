@@ -70,6 +70,15 @@ public class XmlUtil {
         return (Node) path.compile(xpath).evaluate(node, XPathConstants.NODE);
     }
 
+    public static void writeXmlTo(Document document, Path path) {
+        try {
+            getTransformer().transform(new DOMSource(document), new StreamResult(path.toFile()));
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private static Transformer getTransformer() throws TransformerConfigurationException {
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
