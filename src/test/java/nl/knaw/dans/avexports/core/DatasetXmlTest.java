@@ -18,6 +18,7 @@ package nl.knaw.dans.avexports.core;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class DatasetXmlTest {
     private static final String namespaceBindings = "xmlns:ddm=\"http://easy.dans.knaw.nl/schemas/md/ddm/\" "
@@ -37,6 +38,30 @@ public class DatasetXmlTest {
                 "</ddm:DDM>", id));
 
         assertThat(datasetXml.getDatasetId()).isEqualTo(id);
+    }
+
+    @Test
+    public void getDatasetId_should_throw_exception_when_no_datasetId_found() throws Exception {
+        DatasetXml datasetXml = new DatasetXml("<ddm:DDM " + namespaceBindings + "></ddm:DDM>");
+        assertThatThrownBy(datasetXml::getDatasetId)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("No datasetId found in the dataset.xml");
+    }
+
+    @Test
+    public void getDatasetId_should_throw_exception_when_multiple_datasetIds_found() throws Exception {
+        DatasetXml datasetXml = new DatasetXml(String.format(
+            "<ddm:DDM " + namespaceBindings + ">" +
+                " <ddm:profile>\n" +
+                " </ddm:profile>\n" +
+                " <ddm:dcmiMetadata>\n" +
+                "    <dct:identifier xsi:type=\"id-type:EASY2\">easy-dataset:12345</dct:identifier>\n" +
+                "    <dct:identifier xsi:type=\"id-type:EASY2\">easy-dataset:67890</dct:identifier>\n" +
+                " </ddm:dcmiMetadata>\n" +
+                "</ddm:DDM>"));
+        assertThatThrownBy(datasetXml::getDatasetId)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("Multiple datasetIds found in the dataset.xml");
     }
 
 }

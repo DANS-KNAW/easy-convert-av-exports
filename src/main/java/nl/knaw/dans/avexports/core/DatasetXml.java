@@ -16,7 +16,7 @@
 package nl.knaw.dans.avexports.core;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -37,11 +37,13 @@ public class DatasetXml {
     }
 
     public String getDatasetId() throws XPathExpressionException {
-        Node attr = XmlUtil.getByXPath(document, "/ddm:DDM/ddm:dcmiMetadata/dct:identifier[@xsi:type='id-type:EASY2']");
-        if (attr == null) {
+        NodeList attrs = XmlUtil.getNodeListByXPath(document, "/ddm:DDM/ddm:dcmiMetadata/dct:identifier[@xsi:type='id-type:EASY2']");
+        if (attrs.getLength() == 0) {
             throw new IllegalStateException("No datasetId found in the dataset.xml");
+        } else if (attrs.getLength() > 1) {
+            throw new IllegalStateException("Multiple datasetIds found in the dataset.xml");
         }
-        return attr.getTextContent();
+        return attrs.item(0).getTextContent();
     }
 
 }

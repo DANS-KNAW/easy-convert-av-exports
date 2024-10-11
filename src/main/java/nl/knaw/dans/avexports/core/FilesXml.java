@@ -23,6 +23,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class FilesXml {
     private final Document document;
@@ -33,11 +34,25 @@ public class FilesXml {
         this.document = XmlUtil.readXml(path);
     }
 
-    public Node getElementById(String id) throws XPathExpressionException {
-        return XmlUtil.getByXPath(document, "/files/file/dct:identifier[text()='" + id + "']/..");
+    public Path getFilepathForFileId(String id) throws XPathExpressionException {
+        return Paths.get(getElementById(id).getAttributes().getNamedItem("filepath").getNodeValue());
+    }
+
+    public void setFilepathForFileId(String fieldId, Path path) {
+        try {
+            getElementById(fieldId).getAttributes().getNamedItem("filepath").setNodeValue(path.toString());
+        }
+        catch (XPathExpressionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Node getElementById(String id) throws XPathExpressionException {
+        return XmlUtil.getNodesByXPath(document, "/files/file/dct:identifier[text()='" + id + "']/..");
     }
 
     public void write() {
         XmlUtil.writeXmlTo(document, path);
     }
+
 }

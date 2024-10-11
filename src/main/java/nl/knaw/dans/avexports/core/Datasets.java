@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 @Slf4j
 public class Datasets {
     private final Path inputDir;
-    private final Map<String, List<Path>> idToBagPaths = new HashMap<>();
+    private final Map<String, List<Path>> idToBagParents = new HashMap<>();
 
     public Datasets(Path inputDir) throws IOException {
         this.inputDir = inputDir;
@@ -42,15 +42,15 @@ public class Datasets {
         try (Stream<Path> bagParents = Files.list(inputDir)) {
             bagParents.forEach(bagParent -> {
                 String datasetId = findDatasetId(bagParent);
-                List<Path> bags = idToBagPaths.getOrDefault(datasetId, new ArrayList<>());
-                bags.add(bagParent);
-                idToBagPaths.put(datasetId, bags);
-                if (idToBagPaths.get(datasetId).size() > 2) {
+                List<Path> bagParentsForDatasetId = idToBagParents.getOrDefault(datasetId, new ArrayList<>());
+                bagParentsForDatasetId.add(bagParent);
+                idToBagParents.put(datasetId, bagParentsForDatasetId);
+                if (idToBagParents.get(datasetId).size() > 2) {
                     throw new IllegalStateException("More than 2 bags found for dataset id " + datasetId);
                 }
             });
         }
-        log.info("Found {} datasets for {} bags", idToBagPaths.size(), idToBagPaths.values().stream().mapToLong(List::size).sum());
+        log.info("Found {} datasets for {} bags", idToBagParents.size(), idToBagParents.values().stream().mapToLong(List::size).sum());
     }
 
     private String findDatasetId(Path bagParent) {
@@ -92,11 +92,11 @@ public class Datasets {
         }
     }
 
-    public List<Path> getBagsForDataset(String datasetId) {
-        return idToBagPaths.get(datasetId);
+    public List<Path> getBagParentsForDatasetId(String datasetId) {
+        return idToBagParents.get(datasetId);
     }
 
     public Set<String> getDatasetIds() {
-        return idToBagPaths.keySet();
+        return idToBagParents.keySet();
     }
 }

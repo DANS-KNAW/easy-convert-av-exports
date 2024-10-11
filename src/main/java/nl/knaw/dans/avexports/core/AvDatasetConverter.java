@@ -17,8 +17,13 @@ package nl.knaw.dans.avexports.core;
 
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 
+import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Converts the bag(s) exported for one AV dataset to a bag with AV data.
@@ -33,26 +38,51 @@ public class AvDatasetConverter {
     public void convert() throws Exception {
         Datasets datasets = new Datasets(inputDir);
 
-        for (String easyDatasetId: datasets.getDatasetIds()) {
+        for (String easyDatasetId : datasets.getDatasetIds()) {
             if (sources.hasSpringfieldFiles(easyDatasetId)) {
-               if (datasets.getBagsForDataset(easyDatasetId).size() == 1) {
-                   log.info("Only one bag found for dataset id {}. Creating second version bag...", easyDatasetId);
-               }
-               for (String springfieldFileId: sources.getSpringfieldPathsByDatasetId(easyDatasetId)) {
-                   // Copy files to outputDir
-
-
-                   // Modify entry in files.xml
-
-               }
-
+                log.info("Found Springfield files for dataset id {}", easyDatasetId);
+                Path bagParentVersion2 = createVersion2BagIfNeeded(datasets.getBagParentsForDatasetId(easyDatasetId));
+                FilesXml filesXml = new FilesXml(bagParentVersion2.resolve("metadata/files.xml"));
+                for (String springfieldFileId : sources.getSpringfieldPathsByDatasetId(easyDatasetId)) {
+                    Path springfieldFile = sources.getSpringfieldPathByFileId(springfieldFileId);
+                    Path originalFilePath = filesXml.getFilepathForFileId(springfieldFileId);
+                    Path avFile = outputDir.resolve(createNewFilePath(originalFilePath, springfieldFile).getFileName().toString());
+                    FileUtils.copyFile(springfieldFile.toFile(), avFile.toFile());
+                    filesXml.setFilepathForFileId(springfieldFileId, Paths.get(avFile.getFileName().toString()));
+                    // TODO: change the filepath also in the payload manifests.
+                }
+                filesXml.write();
             }
 
             // Remove empty files
 
-
-            // Update bag manifests
+            // Update bag manifests for both bags
 
         }
+    }
+
+    private Path createVersion2BagIfNeeded(List<Path> bagParents) throws IOException {
+        if (bagParents.size() == 1) {
+            Path version2Bag = outputDir.resolve(UUID.randomUUID().toString());
+            FileUtils.copyDirectory(bagParents.get(0).toFile(), version2Bag.toFile());
+            // TODO: Modify bag-info.txt to add Is-Version-Of
+            return version2Bag;
+        }
+        else {
+            return bagParents.get(1);
+        }
+    }
+
+    /**
+     * Creates a new file path for the AV file based on the original file path and the extension of the Springfield file.
+     *
+     * @param filePath        the original file path
+     * @param springFieldPath the path to file in the Springfield directory
+     * @return the new file path
+     */
+    private Path createNewFilePath(Path filePath, Path springFieldPath) {
+        String springFieldExtension = springFieldPath.getFileName().toString().substring(springFieldPath.getFileName().toString().lastIndexOf('.'));
+        String newFileName = filePath.getFileName().toString().substring(0, filePath.getFileName().toString().lastIndexOf('.')) + springFieldExtension;
+        return filePath.getParent().resolve(newFileName);
     }
 }

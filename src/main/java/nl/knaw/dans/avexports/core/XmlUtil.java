@@ -64,11 +64,18 @@ public class XmlUtil {
             .parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
     }
 
-    public static Node getByXPath(Node node, String xpath) throws XPathExpressionException {
+    public static NodeList getNodeListByXPath(Node node, String xpath) throws XPathExpressionException {
+        XPath path = xPathFactory.newXPath();
+        path.setNamespaceContext(XmlNamespacesContext.getInstance());
+        return (NodeList) path.compile(xpath).evaluate(node, XPathConstants.NODESET);
+    }
+
+    public static Node getNodesByXPath(Node node, String xpath) throws XPathExpressionException {
         XPath path = xPathFactory.newXPath();
         path.setNamespaceContext(XmlNamespacesContext.getInstance());
         return (Node) path.compile(xpath).evaluate(node, XPathConstants.NODE);
     }
+
 
     public static void writeXmlTo(Document document, Path path) {
         try {
