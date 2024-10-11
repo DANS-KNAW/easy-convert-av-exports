@@ -29,6 +29,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Represents the sources.csv file, which contains the mapping between easy_file_id and path_in_springfield_dir and between easy_dataset_id and easy_file_id.
+ */
 @Slf4j
 public class Sources {
     private final Map<String, Path> fileIdToSpringfieldPath = new HashMap<>();
@@ -53,7 +56,6 @@ public class Sources {
     public Set<String> getSpringfieldPathsByDatasetId(String easyDatasetId) {
         return datasetIdToSpringfieldPaths.get(easyDatasetId);
     }
-
 
     public boolean hasSpringfieldFiles(String easyDatasetId) {
         return datasetIdToSpringfieldPaths.containsKey(easyDatasetId);

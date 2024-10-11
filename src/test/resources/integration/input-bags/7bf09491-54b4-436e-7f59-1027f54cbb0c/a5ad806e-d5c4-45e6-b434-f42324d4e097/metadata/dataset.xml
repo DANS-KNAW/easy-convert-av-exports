@@ -39,9 +39,9 @@
         <ddm:relation scheme="STREAMING_SURROGATE_RELATION">
             /domain/dans/user/Caleidoscoop_Film/collection/Ingekwartierde_Duitse_militairen/presentation/easy-dataset:41418
         </ddm:relation>
-        <ddm:relation href="https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:41479">Getuigen Verhalen, Project 'Ervaringen van Nederlandse burgers met ingekwartierde Duitse militairen'
+        <ddm:relation href="https://easy.dans.knaw.nl/ui/fedoraExports/id/easy-dataset:41479">Getuigen Verhalen, Project 'Ervaringen van Nederlandse burgers met ingekwartierde Duitse militairen'
         </ddm:relation>
-        <ddm:relation href="https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:33963">Erfgoed van de oorlog projecten</ddm:relation>
+        <ddm:relation href="https://easy.dans.knaw.nl/ui/fedoraExports/id/easy-dataset:33963">Erfgoed van de oorlog projecten</ddm:relation>
         <dc:contributor>March 21 Audiovisuele Producties</dc:contributor>
 
 

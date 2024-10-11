@@ -70,7 +70,7 @@ public class XmlUtil {
         return (NodeList) path.compile(xpath).evaluate(node, XPathConstants.NODESET);
     }
 
-    public static Node getNodesByXPath(Node node, String xpath) throws XPathExpressionException {
+    public static Node getNodeByXPath(Node node, String xpath) throws XPathExpressionException {
         XPath path = xPathFactory.newXPath();
         path.setNamespaceContext(XmlNamespacesContext.getInstance());
         return (Node) path.compile(xpath).evaluate(node, XPathConstants.NODE);

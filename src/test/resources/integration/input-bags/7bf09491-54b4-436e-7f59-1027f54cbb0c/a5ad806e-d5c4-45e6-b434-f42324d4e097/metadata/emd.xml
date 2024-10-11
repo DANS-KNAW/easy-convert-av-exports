@@ -63,11 +63,11 @@
         <dc:relation eas:scheme="STREAMING_SURROGATE_RELATION">/domain/dans/user/Caleidoscoop_Film/collection/Ingekwartierde_Duitse_militairen/presentation/easy-dataset:41418</dc:relation>
         <eas:relation eas:emphasis="true">
             <eas:subject-title>Getuigen Verhalen, Project 'Ervaringen van Nederlandse burgers met ingekwartierde Duitse militairen'</eas:subject-title>
-            <eas:subject-link>https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:41479</eas:subject-link>
+            <eas:subject-link>https://easy.dans.knaw.nl/ui/fedoraExports/id/easy-dataset:41479</eas:subject-link>
         </eas:relation>
         <eas:relation eas:emphasis="true">
             <eas:subject-title>Erfgoed van de oorlog projecten</eas:subject-title>
-            <eas:subject-link>https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:33963</eas:subject-link>
+            <eas:subject-link>https://easy.dans.knaw.nl/ui/fedoraExports/id/easy-dataset:33963</eas:subject-link>
         </eas:relation>
     </emd:relation>
     <emd:coverage>

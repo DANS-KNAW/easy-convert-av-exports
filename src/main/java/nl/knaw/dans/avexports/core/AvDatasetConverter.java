@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -36,12 +37,12 @@ public class AvDatasetConverter {
     private final Sources sources;
 
     public void convert() throws Exception {
-        Datasets datasets = new Datasets(inputDir);
+        FedoraExports fedoraExports = new FedoraExports(inputDir);
 
-        for (String easyDatasetId : datasets.getDatasetIds()) {
+        for (String easyDatasetId : fedoraExports.getDatasetIds()) {
             if (sources.hasSpringfieldFiles(easyDatasetId)) {
                 log.info("Found Springfield files for dataset id {}", easyDatasetId);
-                Path bagParentVersion2 = createVersion2BagIfNeeded(datasets.getBagParentsForDatasetId(easyDatasetId));
+                Path bagParentVersion2 = createVersion2BagIfNeeded(fedoraExports.getBagParentsForDatasetId(easyDatasetId));
                 FilesXml filesXml = new FilesXml(bagParentVersion2.resolve("metadata/files.xml"));
                 for (String springfieldFileId : sources.getSpringfieldPathsByDatasetId(easyDatasetId)) {
                     Path springfieldFile = sources.getSpringfieldPathByFileId(springfieldFileId);
@@ -65,7 +66,9 @@ public class AvDatasetConverter {
         if (bagParents.size() == 1) {
             Path version2Bag = outputDir.resolve(UUID.randomUUID().toString());
             FileUtils.copyDirectory(bagParents.get(0).toFile(), version2Bag.toFile());
-            // TODO: Modify bag-info.txt to add Is-Version-Of
+            String bagInfo = FileUtils.readFileToString(version2Bag.resolve("bag-info.txt").toFile(), StandardCharsets.UTF_8);
+            bagInfo += "Is-Version-Of: " + bagParents.get(0).getFileName().toString() + "\n";
+            FileUtils.write(version2Bag.resolve("bag-info.txt").toFile(), bagInfo, StandardCharsets.UTF_8);
             return version2Bag;
         }
         else {

@@ -27,14 +27,34 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
+/**
+ * Represents the exports from Fedora. The exports are expected to be in the following structure:
+ * <pre>
+ *     exports-dir
+ *        bag-parent-1 (a UUID)
+ *           bag-1
+ *        bag-parent-2 (a UUID)
+ *           bag-2
+ * </pre>
+ * The bag-parents will later be converted to deposits by easy-convert-bag-to-deposit. Each bag contains a dataset.xml with a datasetId (e.g., easy-dataset:12345). There are one ore two bags for each
+ * datasetId. The bags are versioned, so there can be a version 1 and a version 2 bag for the same datasetId. This class provides a way to find the bags for a datasetId.
+ */
 @Slf4j
-public class Datasets {
+public class FedoraExports {
     private final Path inputDir;
     private final Map<String, List<Path>> idToBagParents = new HashMap<>();
 
-    public Datasets(Path inputDir) throws IOException {
+    public FedoraExports(Path inputDir) throws IOException {
         this.inputDir = inputDir;
         buildIdToBagPaths();
+    }
+
+    public List<Path> getBagParentsForDatasetId(String datasetId) {
+        return idToBagParents.get(datasetId);
+    }
+
+    public Set<String> getDatasetIds() {
+        return idToBagParents.keySet();
     }
 
     private void buildIdToBagPaths() throws IOException {
@@ -90,13 +110,5 @@ public class Datasets {
         catch (IOException e) {
             throw new RuntimeException("Error while reading " + bagParent, e);
         }
-    }
-
-    public List<Path> getBagParentsForDatasetId(String datasetId) {
-        return idToBagParents.get(datasetId);
-    }
-
-    public Set<String> getDatasetIds() {
-        return idToBagParents.keySet();
     }
 }

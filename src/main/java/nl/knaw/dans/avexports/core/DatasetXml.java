@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.avexports.core;
 
+import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -24,6 +25,10 @@ import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.nio.file.Path;
 
+/**
+ * Represents the dataset.xml file in an AV export. It provides methods to perform the necessary lookups.
+ */
+@Slf4j
 public class DatasetXml {
     private final Document document;
 

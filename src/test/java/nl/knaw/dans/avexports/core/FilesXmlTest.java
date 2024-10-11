@@ -15,5 +15,80 @@
  */
 package nl.knaw.dans.avexports.core;
 
-public class FilesXmlTest {
+import org.junit.jupiter.api.Test;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+public class FilesXmlTest extends AbstractTestWithTestDir {
+    private static final String namespaceBindings =
+             "xmlns=\"http://easy.dans.knaw.nl/schemas/bag/metadata/files/\" xmlns:dct=\"http://purl.org/dc/terms/\"";
+
+    @Test
+    public void getFilepathForFileId_should_return_the_filepath() throws Exception {
+        String xml = "<files " + namespaceBindings + ">"
+            + " <file filepath=\"path/to/file\">"
+            + "  <dct:identifier>easy-file:1</dct:identifier>"
+            + " </file>"
+            + "</files>";
+
+        FilesXml filesXml = new FilesXml(xml, null);
+        assertThat(filesXml.getFilepathForFileId("easy-file:1")).isEqualTo(Paths.get("path/to/file"));
+    }
+
+    @Test
+    public void getFilepathForFileId_should_return_the_filepath_when_multiple_files() throws Exception {
+        String xml = "<files " + namespaceBindings + ">"
+            + " <file filepath=\"path/to/file1\">"
+            + "  <dct:identifier>easy-file:1</dct:identifier>"
+            + " </file>"
+            + " <file filepath=\"path/to/file2\">"
+            + "  <dct:identifier>easy-file:2</dct:identifier>"
+            + " </file>"
+            + "</files>";
+
+        FilesXml filesXml = new FilesXml(xml, null);
+        assertThat(filesXml.getFilepathForFileId("easy-file:2")).isEqualTo(Paths.get("path/to/file2"));
+    }
+
+    @Test
+    public void getFilepathForFileId_should_throw_exception_when_no_file_found() throws Exception {
+        String xml = "<files " + namespaceBindings + "></files>";
+        FilesXml filesXml = new FilesXml(xml, null);
+        assertThatThrownBy(() -> filesXml.getFilepathForFileId("easy-file:1"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("No file with id easy-file:1 found in files.xml");
+    }
+
+    @Test
+    public void setFilepathForFileId_should_set_the_filepath() throws Exception {
+        String xml = "<files " + namespaceBindings + ">"
+            + " <file filepath=\"path/to/file\">"
+            + "  <dct:identifier>easy-file:1</dct:identifier>"
+            + " </file>"
+            + "</files>";
+
+        FilesXml filesXml = new FilesXml(xml, null);
+        filesXml.setFilepathForFileId("easy-file:1", Paths.get("new/path/to/file"));
+        assertThat(filesXml.getFilepathForFileId("easy-file:1")).isEqualTo(Paths.get("new/path/to/file"));
+    }
+
+    @Test
+    public void write_should_write_the_xml() throws Exception {
+        String xml = "<files " + namespaceBindings + ">"
+            + " <file filepath=\"path/to/file\">"
+            + "  <dct:identifier>easy-file:1</dct:identifier>"
+            + " </file>"
+            + "</files>";
+
+        FilesXml filesXml = new FilesXml(xml, testDir.resolve("files.xml"));
+        filesXml.setFilepathForFileId("easy-file:1", Paths.get("new/path/to/file"));
+        filesXml.write();
+
+        String actual = new String(Files.readAllBytes(testDir.resolve("files.xml")));
+        assertThat(actual).contains("filepath=\"new/path/to/file\"");
+    }
 }
