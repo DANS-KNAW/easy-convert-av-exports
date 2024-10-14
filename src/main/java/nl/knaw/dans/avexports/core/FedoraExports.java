@@ -63,6 +63,7 @@ public class FedoraExports {
             bagParents.forEach(bagParent -> {
                 String datasetId = findDatasetId(bagParent);
                 List<Path> bagParentsForDatasetId = idToBagParents.getOrDefault(datasetId, new ArrayList<>());
+                // TODO: insert as first element if version 1
                 bagParentsForDatasetId.add(bagParent);
                 idToBagParents.put(datasetId, bagParentsForDatasetId);
                 if (idToBagParents.get(datasetId).size() > 2) {
@@ -103,7 +104,7 @@ public class FedoraExports {
         }
     }
 
-    private Path getBagDir(Path bagParent) {
+    public Path getBagDir(Path bagParent) {
         try (Stream<Path> paths = Files.list(bagParent).filter(Files::isDirectory).filter(f -> !f.equals(bagParent))) {
             return paths.findFirst().orElseThrow(() -> new IllegalStateException("No directories found in " + bagParent));
         }

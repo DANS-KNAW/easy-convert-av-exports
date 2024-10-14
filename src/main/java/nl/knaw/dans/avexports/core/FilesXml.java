@@ -46,21 +46,21 @@ public class FilesXml {
         this.path = path;
     }
 
-    public Path getFilepathForFileId(String id) throws XPathExpressionException {
+    public String getFilepathForFileId(String id) throws XPathExpressionException {
         Node fileNode = getElementById(id);
         if (fileNode == null) {
             throw new IllegalArgumentException("No file with id " + id + " found in files.xml");
         }
-        return Paths.get(fileNode.getAttributes().getNamedItem("filepath").getNodeValue());
+        return fileNode.getAttributes().getNamedItem("filepath").getNodeValue();
     }
 
-    public void setFilepathForFileId(String id, Path path) {
+    public void setFilepathForFileId(String id, String path) {
         try {
             Node fileNode = getElementById(id);
             if (fileNode == null) {
                 throw new IllegalArgumentException("No file with id " + id + " found in files.xml");
             }
-            fileNode.getAttributes().getNamedItem("filepath").setNodeValue(path.toString());
+            fileNode.getAttributes().getNamedItem("filepath").setNodeValue(path);
         }
         catch (XPathExpressionException e) {
             throw new RuntimeException(e);

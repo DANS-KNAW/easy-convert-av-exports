@@ -36,7 +36,7 @@ public class FilesXmlTest extends AbstractTestWithTestDir {
             + "</files>";
 
         FilesXml filesXml = new FilesXml(xml, null);
-        assertThat(filesXml.getFilepathForFileId("easy-file:1")).isEqualTo(Paths.get("path/to/file"));
+        assertThat(filesXml.getFilepathForFileId("easy-file:1")).isEqualTo("path/to/file");
     }
 
     @Test
@@ -51,7 +51,7 @@ public class FilesXmlTest extends AbstractTestWithTestDir {
             + "</files>";
 
         FilesXml filesXml = new FilesXml(xml, null);
-        assertThat(filesXml.getFilepathForFileId("easy-file:2")).isEqualTo(Paths.get("path/to/file2"));
+        assertThat(filesXml.getFilepathForFileId("easy-file:2")).isEqualTo("path/to/file2");
     }
 
     @Test
@@ -72,8 +72,8 @@ public class FilesXmlTest extends AbstractTestWithTestDir {
             + "</files>";
 
         FilesXml filesXml = new FilesXml(xml, null);
-        filesXml.setFilepathForFileId("easy-file:1", Paths.get("new/path/to/file"));
-        assertThat(filesXml.getFilepathForFileId("easy-file:1")).isEqualTo(Paths.get("new/path/to/file"));
+        filesXml.setFilepathForFileId("easy-file:1", "new/path/to/file");
+        assertThat(filesXml.getFilepathForFileId("easy-file:1")).isEqualTo("new/path/to/file");
     }
 
     @Test
@@ -85,7 +85,7 @@ public class FilesXmlTest extends AbstractTestWithTestDir {
             + "</files>";
 
         FilesXml filesXml = new FilesXml(xml, testDir.resolve("files.xml"));
-        filesXml.setFilepathForFileId("easy-file:1", Paths.get("new/path/to/file"));
+        filesXml.setFilepathForFileId("easy-file:1", "new/path/to/file");
         filesXml.write();
 
         String actual = new String(Files.readAllBytes(testDir.resolve("files.xml")));

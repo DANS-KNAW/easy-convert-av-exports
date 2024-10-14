@@ -34,30 +34,30 @@ import java.util.Set;
  */
 @Slf4j
 public class Sources {
-    private final Map<String, Path> fileIdToSpringfieldPath = new HashMap<>();
+    private final Map<String, String> fileIdToSpringfieldPath = new HashMap<>();
 
-    private final Map<String, Set<String>> datasetIdToSpringfieldPaths = new HashMap<>();
+    private final Map<String, Set<String>> datasetIdToSpringfieldFileIds = new HashMap<>();
 
     public Sources(Path sourcesCsv) throws IOException {
         log.info("Reading sources from {}", sourcesCsv);
         try (CSVParser csvParser = CSVParser.parse(sourcesCsv.toFile(), StandardCharsets.UTF_8, CSVFormat.DEFAULT.withHeader())) {
             for (CSVRecord csvRecord : csvParser) {
-                fileIdToSpringfieldPath.put(csvRecord.get("easy_file_id"), Paths.get(csvRecord.get("path_in_springfield_dir")));
-                datasetIdToSpringfieldPaths.computeIfAbsent(csvRecord.get("easy_dataset_id"), k -> new HashSet<>()).add(csvRecord.get("easy_file_id"));
+                fileIdToSpringfieldPath.put(csvRecord.get("easy_file_id"), csvRecord.get("path_in_springfield_dir"));
+                datasetIdToSpringfieldFileIds.computeIfAbsent(csvRecord.get("easy_dataset_id"), k -> new HashSet<>()).add(csvRecord.get("easy_file_id"));
             }
         }
         log.info("Read {} rows from {}", fileIdToSpringfieldPath.size(), sourcesCsv);
     }
 
-    public Path getSpringfieldPathByFileId(String fileId) {
+    public String getSpringfieldPathByFileId(String fileId) {
         return fileIdToSpringfieldPath.get(fileId);
     }
 
-    public Set<String> getSpringfieldPathsByDatasetId(String easyDatasetId) {
-        return datasetIdToSpringfieldPaths.get(easyDatasetId);
+    public Set<String> getSpringfieldFileIdsFor(String easyDatasetId) {
+        return datasetIdToSpringfieldFileIds.get(easyDatasetId);
     }
 
     public boolean hasSpringfieldFiles(String easyDatasetId) {
-        return datasetIdToSpringfieldPaths.containsKey(easyDatasetId);
+        return datasetIdToSpringfieldFileIds.containsKey(easyDatasetId);
     }
 }
