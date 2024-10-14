@@ -67,6 +67,13 @@ public class BagUtil {
         }
     }
 
+    public static void updateTagManifestsForPath(Bag bag, String path) {
+        Set<Manifest> manifestSet = bag.getTagManifests();
+        for (Manifest manifest : manifestSet) {
+            manifest.getFileToChecksumMap().put(bag.getRootDir().resolve(path), new Hasher(bag.getRootDir().resolve(path), manifest.getAlgorithm().toString()).getChecksum());
+        }
+    }
+
     public static Bag updateBagVersion(Path newBagDir, Path previousBagDir)
         throws IOException, UnparsableVersionException, MaliciousPathException, UnsupportedAlgorithmException, InvalidBagitFileFormatException, ParserConfigurationException, SAXException {
         String now = ZonedDateTime

@@ -43,7 +43,7 @@ public class Sources {
         try (CSVParser csvParser = CSVParser.parse(sourcesCsv.toFile(), StandardCharsets.UTF_8, CSVFormat.DEFAULT.withHeader())) {
             for (CSVRecord csvRecord : csvParser) {
                 fileIdToSpringfieldPath.put(csvRecord.get("easy_file_id"), csvRecord.get("path_in_springfield_dir"));
-                datasetIdToSpringfieldFileIds.computeIfAbsent(csvRecord.get("easy_dataset_id"), k -> new HashSet<>()).add(csvRecord.get("easy_file_id"));
+                datasetIdToSpringfieldFileIds.computeIfAbsent(csvRecord.get("dataset_id"), k -> new HashSet<>()).add(csvRecord.get("easy_file_id"));
             }
         }
         log.info("Read {} rows from {}", fileIdToSpringfieldPath.size(), sourcesCsv);

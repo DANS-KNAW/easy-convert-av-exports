@@ -18,6 +18,7 @@ package nl.knaw.dans.avexports.core;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import nl.knaw.dans.bagit.domain.Bag;
+import nl.knaw.dans.bagit.domain.Manifest;
 import nl.knaw.dans.bagit.exceptions.InvalidBagitFileFormatException;
 import nl.knaw.dans.bagit.exceptions.MaliciousPathException;
 import nl.knaw.dans.bagit.exceptions.UnparsableVersionException;
@@ -26,11 +27,12 @@ import org.apache.commons.io.FileUtils;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Converts the bag(s) exported for one AV dataset to a bag with AV data.
@@ -38,51 +40,74 @@ import java.util.UUID;
 @Slf4j
 @Builder
 public class AvDatasetConverter {
-    private final Path inputDir;
+    private final FedoraExports fedoraExports;
     private final Path outputDir;
     private final Sources sources;
     private final Path springfieldDir;
 
-    public void convert() throws Exception {
-        FedoraExports fedoraExports = new FedoraExports(inputDir);
+    public void convert() {
+        try {
+            for (String easyDatasetId : fedoraExports.getDatasetIds()) {
+                if (sources.hasSpringfieldFiles(easyDatasetId)) {
+                    log.info("Found Springfield files for dataset id {}", easyDatasetId);
+                    Path bagParentVersion2 = createVersion2BagIfNeeded(fedoraExports.getBagParentsForDatasetId(easyDatasetId));
+                    Path bagDir2 = fedoraExports.getBagDir(bagParentVersion2);
+                    Bag bag2 = BagUtil.getBag(bagDir2);
 
-        for (String easyDatasetId : fedoraExports.getDatasetIds()) {
-            if (sources.hasSpringfieldFiles(easyDatasetId)) {
-                log.info("Found Springfield files for dataset id {}", easyDatasetId);
-                Path bagParentVersion2 = createVersion2BagIfNeeded(fedoraExports.getBagParentsForDatasetId(easyDatasetId));
-                Path bagDir = fedoraExports.getBagDir(bagParentVersion2);
-                Bag bag2 = BagUtil.getBag(bagDir);
+                    FilesXml filesXml = new FilesXml(bagDir2.resolve("metadata/files.xml"));
+                    for (String springfieldFileId : sources.getSpringfieldFileIdsFor(easyDatasetId)) {
+                        String springfieldFile = sources.getSpringfieldPathByFileId(springfieldFileId);
+                        log.debug("Found Springfield file {} for file id {}", springfieldFile, springfieldFileId);
+                        String originalFilePathInDataset = filesXml.getFilepathForFileId(springfieldFileId);
+                        log.debug("Original file path in dataset: {}", originalFilePathInDataset);
+                        String newFilePathInDataset = createNewFilePath(originalFilePathInDataset, springfieldFile);
+                        log.debug("New file path in dataset: {}", newFilePathInDataset);
+                        Path avFile = bagDir2.resolve(newFilePathInDataset);
 
-                FilesXml filesXml = new FilesXml(bagParentVersion2.resolve("metadata/files.xml"));
-                for (String springfieldFileId : sources.getSpringfieldFileIdsFor(easyDatasetId)) {
-                    String springfieldFile = sources.getSpringfieldPathByFileId(springfieldFileId);
-                    String originalFilePathInDataset = filesXml.getFilepathForFileId(springfieldFileId);
-                    String newFilePathInDataset = createNewFilePath(originalFilePathInDataset, springfieldFile);
-                    Path avFile = bagDir.resolve(newFilePathInDataset);
-                    FileUtils.copyFile(springfieldDir.resolve(springfieldFile).toFile(), avFile.toFile());
-                    filesXml.setFilepathForFileId(springfieldFileId, newFilePathInDataset);
-                    BagUtil.removePayloadManifestsForPath(bag2, originalFilePathInDataset);
-                    BagUtil.updatePayloadManifestsForPath(bag2, newFilePathInDataset);
+                        // Replace the original file with the AV file
+                        Files.delete(bagDir2.resolve(originalFilePathInDataset));
+                        log.debug("Deleted original file {}", originalFilePathInDataset);
+                        FileUtils.copyFile(springfieldDir.resolve(springfieldFile).toFile(), avFile.toFile());
+                        log.debug("Copied Springfield file to {}", avFile);
+                        filesXml.setFilepathForFileId(springfieldFileId, newFilePathInDataset);
+                        BagUtil.removePayloadManifestsForPath(bag2, originalFilePathInDataset);
+                        BagUtil.updatePayloadManifestsForPath(bag2, newFilePathInDataset);
+                    }
+                    filesXml.write();
+                    BagUtil.updateTagManifestsForPath(bag2, "metadata/files.xml");
+                    BagUtil.updateTagManifestsForPath(bag2, "bag-info.txt");
+                    for (Manifest payloadManifest : bag2.getPayLoadManifests()) {
+                        BagUtil.updateTagManifestsForPath(bag2, "manifest-" + payloadManifest.getAlgorithm().getBagitName() + ".txt");
+                    }
                 }
-                filesXml.write();
 
-                // TODO: update tagmanifest for files.xml, payload manifests and bag-info.txt
-            }
+                // Remove empty files
+                for (Path bagParent : fedoraExports.getBagParentsForDatasetId(easyDatasetId)) {
 
-            // Remove empty files
-            for (Path bagParent : fedoraExports.getBagParentsForDatasetId(easyDatasetId)) {
-                //
+                }
+
+                // TODO: verify that the resulting bags are valid
+
             }
+            // Move staging to output
+            fedoraExports.moveTo(outputDir);
+        }
+        catch (IOException
+               | ParserConfigurationException
+               | SAXException
+               | XPathExpressionException e) {
+            throw new RuntimeException("Error converting AV dataset", e);
         }
     }
 
     private Path createVersion2BagIfNeeded(List<Path> bagParents) {
         try {
             if (bagParents.size() == 1) {
-                Path version2Bag = outputDir.resolve(UUID.randomUUID().toString());
-                FileUtils.copyDirectory(bagParents.get(0).toFile(), version2Bag.toFile());
-                BagUtil.updateBagVersion(version2Bag, bagParents.get(0));
-                return version2Bag;
+                Path version1BagDir = fedoraExports.getBagDir(bagParents.get(0));
+                Path version2BagDir = fedoraExports.createNewBagPath();
+                FileUtils.copyDirectory(version1BagDir.toFile(), version2BagDir.toFile());
+                BagUtil.updateBagVersion(version2BagDir, version1BagDir);
+                return version2BagDir.getParent();
             }
             else {
                 return bagParents.get(1);

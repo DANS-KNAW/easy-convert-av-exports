@@ -16,6 +16,7 @@
 package nl.knaw.dans.avexports.core;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 /**
@@ -57,14 +59,28 @@ public class FedoraExports {
         return idToBagParents.keySet();
     }
 
+    public Path createNewBagPath() throws IOException {
+        Path bag = inputDir.resolve(UUID.randomUUID().toString()).resolve(UUID.randomUUID().toString());
+        Files.createDirectories(bag);
+        return bag;
+    }
+
+    public void moveTo(Path targetDirectory) throws IOException {
+        FileUtils.moveDirectory(inputDir.toFile(), targetDirectory.toFile());
+    }
+
     private void buildIdToBagPaths() throws IOException {
         log.info("Building dataset id to bag paths map");
         try (Stream<Path> bagParents = Files.list(inputDir)) {
             bagParents.forEach(bagParent -> {
                 String datasetId = findDatasetId(bagParent);
                 List<Path> bagParentsForDatasetId = idToBagParents.getOrDefault(datasetId, new ArrayList<>());
-                // TODO: insert as first element if version 1
-                bagParentsForDatasetId.add(bagParent);
+                if (isSecondVersion(bagParent)) {
+                    bagParentsForDatasetId.add(bagParent);
+                }
+                else {
+                    bagParentsForDatasetId.add(0, bagParent);
+                }
                 idToBagParents.put(datasetId, bagParentsForDatasetId);
                 if (idToBagParents.get(datasetId).size() > 2) {
                     throw new IllegalStateException("More than 2 bags found for dataset id " + datasetId);
@@ -72,6 +88,17 @@ public class FedoraExports {
             });
         }
         log.info("Found {} datasets for {} bags", idToBagParents.size(), idToBagParents.values().stream().mapToLong(List::size).sum());
+    }
+
+    private boolean isSecondVersion(Path bagParent) {
+        Path bagDir = getBagDir(bagParent);
+        Path bagInfo = bagDir.resolve("bag-info.txt");
+        try (Stream<String> lines = Files.lines(bagInfo)) {
+            return lines.anyMatch(line -> line.startsWith("Is-Version-Of:"));
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Error while reading " + bagInfo, e);
+        }
     }
 
     private String findDatasetId(Path bagParent) {

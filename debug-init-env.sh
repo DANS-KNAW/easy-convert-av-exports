@@ -18,4 +18,9 @@
 echo -n "Pre-creating log..."
 TEMPDIR=data
 touch $TEMPDIR/easy-convert-av-exports.log
+
+echo -n "Creating staging directory..."
+STAGING_DIR=$TEMPDIR/staging
+mkdir -p $STAGING_DIR
+
 echo "OK"

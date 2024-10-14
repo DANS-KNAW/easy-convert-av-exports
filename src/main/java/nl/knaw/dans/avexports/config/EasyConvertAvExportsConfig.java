@@ -22,6 +22,7 @@ import lombok.EqualsAndHashCode;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.nio.file.Path;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -29,4 +30,7 @@ public class EasyConvertAvExportsConfig extends Configuration {
     @Valid
     @NotNull
     private SourcesConfig sources;
+
+    @NotNull
+    private Path stagingDir;
 }
