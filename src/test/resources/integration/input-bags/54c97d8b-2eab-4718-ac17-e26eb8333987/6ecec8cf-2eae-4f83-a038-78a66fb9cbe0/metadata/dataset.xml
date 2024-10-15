@@ -2,7 +2,8 @@
 <ddm:DDM xsi:schemaLocation="http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
          xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
          xmlns:dcx-dai="http://easy.dans.knaw.nl/schemas/dcx/dai/" xmlns:dct="http://purl.org/dc/terms/"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dc="http://purl.org/dc/elements/1.1/">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:id-type="http://easy.dans.knaw.nl/schemas/vocab/identifier-type/"><!-- DO NOT REMOVE, IT IS USED INSIDE AN ATTRIBUTE VALUE -->
     <ddm:profile>
         <dc:title>Interview Eva Gonggrijp on Grenzeloze Inhoud</dc:title>
         <dct:description>Michael Gibbs took part in the project &quot;Traveling exhibition&quot; in 1983. He decided to perforate the suitcase designed by John den Besten with bullets. Unfortunately, the artist passed away in 2007. This interview is with Eva Gonggrijp, his widow. She describes in more detail the philosophy behind Michael Gibbs' art.</dct:description>

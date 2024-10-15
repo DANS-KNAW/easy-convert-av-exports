@@ -2,7 +2,8 @@
 <ddm:DDM xsi:schemaLocation="http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
          xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
          xmlns:dcx-dai="http://easy.dans.knaw.nl/schemas/dcx/dai/" xmlns:dct="http://purl.org/dc/terms/"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dc="http://purl.org/dc/elements/1.1/">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:id-type="http://easy.dans.knaw.nl/schemas/vocab/identifier-type/"><!-- DO NOT REMOVE, IT IS USED INSIDE AN ATTRIBUTE VALUE -->
     <ddm:profile>
         <dc:title>Institutions for Collective Action: Kroniek van een Bazenbondje, interview met Peter Essenberg</dc:title>
         <dct:description>Peter Essenberg is zeventig jaar oud en is zijn bedrijf begonnen op z’n vijftigste. Dat lijkt hem goed af te gaan: hij heeft een holding met diverse werkmaatschappijen die vooral handel drijven met het Midden-Oosten. Die handel is een eclectische mix van schoensmeer tot boten tot cosmetica tot

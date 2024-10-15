@@ -2,7 +2,8 @@
 <ddm:DDM xsi:schemaLocation="http://easy.dans.knaw.nl/schemas/md/ddm/ https://easy.dans.knaw.nl/schemas/md/ddm/ddm.xsd"
          xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
          xmlns:dcx-dai="http://easy.dans.knaw.nl/schemas/dcx/dai/" xmlns:dct="http://purl.org/dc/terms/"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dc="http://purl.org/dc/elements/1.1/">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:id-type="http://easy.dans.knaw.nl/schemas/vocab/identifier-type/"><!-- DO NOT REMOVE, IT IS USED INSIDE AN ATTRIBUTE VALUE -->
     <ddm:profile>
         <dc:title>Research Data Nini Hoiting: Home Recordings KAS 02;08.12</dc:title>
         <dct:description>These video recordings (with limited transcriptions for just a few files) were made by Dr. Nini Hoiting, developmental linguist at the Royal Kentalis institute for the deaf &quot;H.D. Guyot&quot; in Haren, Groningen, the Netherlands, between 1988 and 2009. Most recordings were not used for academic research on language development, but for monitoring the children's language development.</dct:description>
