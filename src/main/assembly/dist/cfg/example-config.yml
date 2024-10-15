@@ -1,3 +1,9 @@
+sources:
+  path: /var/opt/dans.knaw.nl/tmp/easy-convert-av-exports/sources.csv
+  springfieldDir: /var/opt/dans.knaw.nl/tmp/easy-convert-av-exports/springfield
+
+stagingDir: /var/opt/dans.knaw.nl/tmp/easy-convert-av-exports-staging
+
 #
 # See https://www.dropwizard.io/en/latest/manual/configuration.html#logging
 #
