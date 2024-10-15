@@ -9,7 +9,6 @@ SYNOPSIS
 
     easy-convert-av-exports { server | check }
 
-
 DESCRIPTION
 -----------
 
@@ -30,12 +29,12 @@ EXAMPLES
 --------
 
 <!-- Add examples of invoking this module from the command line or via HTTP other interfaces -->
-    
+
 
 INSTALLATION AND CONFIGURATION
 ------------------------------
 Currently this project is built as an RPM package for RHEL7/CentOS7 and later. The RPM will install the binaries to
-`/opt/dans.knaw.nl/easy-convert-av-exports` and the configuration files to `/etc/opt/dans.knaw.nl/easy-convert-av-exports`. 
+`/opt/dans.knaw.nl/easy-convert-av-exports` and the configuration files to `/etc/opt/dans.knaw.nl/easy-convert-av-exports`.
 
 For installation on systems that do no support RPM and/or systemd:
 
@@ -55,12 +54,12 @@ Prerequisites:
 * RPM
 
 Steps:
-    
+
     git clone https://github.com/DANS-KNAW/easy-convert-av-exports.git
     cd easy-convert-av-exports 
     mvn clean install
 
-If the `rpm` executable is found at `/usr/local/bin/rpm`, the build profile that includes the RPM 
+If the `rpm` executable is found at `/usr/local/bin/rpm`, the build profile that includes the RPM
 packaging will be activated. If `rpm` is available, but at a different path, then activate it by using
 Maven's `-P` switch: `mvn -Pprm install`.
 
