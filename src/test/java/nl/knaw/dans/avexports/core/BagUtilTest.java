@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class BagUtilTest extends AbstractTestWithTestDir {
 
     @Test
-    public void removePayloadManifestsForPath_should_remove_path_from_all_payload_manifests() throws Exception {
+    public void removePayloadManifestsForPath_should_remove_path_from_all_payload_manifestEntries() throws Exception {
         Path testBag = testDir.resolve("bag");
         FileUtils.copyDirectory(Paths.get("src/test/resources/test-bags/bag1").toFile(), testBag.toFile());
         Bag bag = new BagReader().read(testBag);
@@ -38,7 +38,7 @@ public class BagUtilTest extends AbstractTestWithTestDir {
         for (Manifest manifest : bag.getPayLoadManifests()) {
             assertThat(manifest.getFileToChecksumMap().containsKey(testBag.resolve(localPath))).isTrue();
         }
-        BagUtil.removePayloadManifestsForPath(bag, localPath);
+        BagUtil.removePayloadManifestEntriesForPath(bag, localPath);
 
         for (Manifest manifest : bag.getPayLoadManifests()) {
             assertThat(manifest.getFileToChecksumMap().containsKey(testBag.resolve(localPath))).isFalse();

@@ -91,4 +91,51 @@ public class FilesXmlTest extends AbstractTestWithTestDir {
         String actual = new String(Files.readAllBytes(testDir.resolve("files.xml")));
         assertThat(actual).contains("filepath=\"new/path/to/file\"");
     }
+
+    @Test
+    public void getFileIds_should_return_the_file_ids() throws Exception {
+        String xml = "<files " + namespaceBindings + ">"
+            + " <file>"
+            + "  <dct:identifier>easy-file:1</dct:identifier>"
+            + " </file>"
+            + " <file>"
+            + "  <dct:identifier>easy-file:2</dct:identifier>"
+            + " </file>"
+            + "</files>";
+
+        FilesXml filesXml = new FilesXml(xml, null);
+        assertThat(filesXml.getFileIds()).containsExactly("easy-file:1", "easy-file:2");
+    }
+
+    @Test
+    public void getFileIds_should_return_empty_list_when_no_files() throws Exception {
+        String xml = "<files " + namespaceBindings + "></files>";
+        FilesXml filesXml = new FilesXml(xml, null);
+        assertThat(filesXml.getFileIds()).isEmpty();
+    }
+
+    @Test
+    public void removeFile_should_remove_the_file() throws Exception {
+        String xml = "<files " + namespaceBindings + ">"
+            + " <file>"
+            + "  <dct:identifier>easy-file:1</dct:identifier>"
+            + " </file>"
+            + " <file>"
+            + "  <dct:identifier>easy-file:2</dct:identifier>"
+            + " </file>"
+            + "</files>";
+
+        FilesXml filesXml = new FilesXml(xml, null);
+        filesXml.removeFile("easy-file:1");
+        assertThat(filesXml.getFileIds()).containsExactly("easy-file:2");
+    }
+
+    @Test
+    public void removeFile_should_throw_exception_when_no_file_found() throws Exception {
+        String xml = "<files " + namespaceBindings + "></files>";
+        FilesXml filesXml = new FilesXml(xml, null);
+        assertThatThrownBy(() -> filesXml.removeFile("easy-file:1"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("No file with id easy-file:1 found in files.xml");
+    }
 }

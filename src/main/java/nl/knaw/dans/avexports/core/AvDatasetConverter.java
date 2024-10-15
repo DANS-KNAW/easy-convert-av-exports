@@ -19,10 +19,6 @@ import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import nl.knaw.dans.bagit.domain.Bag;
 import nl.knaw.dans.bagit.domain.Manifest;
-import nl.knaw.dans.bagit.exceptions.InvalidBagitFileFormatException;
-import nl.knaw.dans.bagit.exceptions.MaliciousPathException;
-import nl.knaw.dans.bagit.exceptions.UnparsableVersionException;
-import nl.knaw.dans.bagit.exceptions.UnsupportedAlgorithmException;
 import org.apache.commons.io.FileUtils;
 import org.xml.sax.SAXException;
 
@@ -47,15 +43,16 @@ public class AvDatasetConverter {
 
     public void convert() {
         try {
-            for (String easyDatasetId : fedoraExports.getDatasetIds()) {
-                if (sources.hasSpringfieldFiles(easyDatasetId)) {
-                    log.info("Found Springfield files for dataset id {}", easyDatasetId);
-                    Path bagParentVersion2 = createVersion2BagIfNeeded(fedoraExports.getBagParentsForDatasetId(easyDatasetId));
+            for (String datasetId : fedoraExports.getDatasetIds()) {
+                if (sources.hasSpringfieldFiles(datasetId)) {
+                    log.info("Found Springfield files for dataset id {}", datasetId);
+                    Path bagParentVersion2 = createVersion2BagIfNeeded(fedoraExports.getBagParentsForDatasetId(datasetId));
                     Path bagDir2 = fedoraExports.getBagDir(bagParentVersion2);
-                    Bag bag2 = BagUtil.getBag(bagDir2);
+                    Bag bag2 = BagUtil.readBag(bagDir2);
+                    log.debug(">>> Start processing bag parent {} >>>", bagParentVersion2);
 
                     FilesXml filesXml = new FilesXml(bagDir2.resolve("metadata/files.xml"));
-                    for (String springfieldFileId : sources.getSpringfieldFileIdsFor(easyDatasetId)) {
+                    for (String springfieldFileId : sources.getSpringfieldFileIdsFor(datasetId)) {
                         String springfieldFile = sources.getSpringfieldPathByFileId(springfieldFileId);
                         log.debug("Found Springfield file {} for file id {}", springfieldFile, springfieldFileId);
                         String originalFilePathInDataset = filesXml.getFilepathForFileId(springfieldFileId);
@@ -70,26 +67,38 @@ public class AvDatasetConverter {
                         FileUtils.copyFile(springfieldDir.resolve(springfieldFile).toFile(), avFile.toFile());
                         log.debug("Copied Springfield file to {}", avFile);
                         filesXml.setFilepathForFileId(springfieldFileId, newFilePathInDataset);
-                        BagUtil.removePayloadManifestsForPath(bag2, originalFilePathInDataset);
+                        log.debug("Updated files.xml with new file path {}", newFilePathInDataset);
+                        BagUtil.removePayloadManifestEntriesForPath(bag2, originalFilePathInDataset);
                         BagUtil.updatePayloadManifestsForPath(bag2, newFilePathInDataset);
+                        log.debug("Updated payload and tag manifests for new file path {}", newFilePathInDataset);
                     }
+                    // Remove empty files
+                    removeEmptyFiles(bag2, filesXml);
+                    log.debug("Removed empty files");
                     filesXml.write();
-                    BagUtil.updateTagManifestsForPath(bag2, "metadata/files.xml");
-                    BagUtil.updateTagManifestsForPath(bag2, "bag-info.txt");
-                    for (Manifest payloadManifest : bag2.getPayLoadManifests()) {
-                        BagUtil.updateTagManifestsForPath(bag2, "manifest-" + payloadManifest.getAlgorithm().getBagitName() + ".txt");
-                    }
+                    log.debug("Wrote updated files.xml");
+                    BagUtil.updateTagManifestsForPaths(bag2, "metadata/files.xml", "bag-info.txt");
+                    BagUtil.updatePayloadManifestChecksumsInTagManifests(bag2);
+                    log.debug("Updated tag manifests");
+                    // Write the manifests
+                    BagUtil.writeBag(bag2);
+                    log.debug("Wrote updated bag");
+                    log.debug("<<< Finished processing bag parent {} <<<", bagParentVersion2);
                 }
 
-                // Remove empty files
-                for (Path bagParent : fedoraExports.getBagParentsForDatasetId(easyDatasetId)) {
-
-                }
-
-                // TODO: verify that the resulting bags are valid
-
+                Path bagParentVersion1 = fedoraExports.getBagParentsForDatasetId(datasetId).get(0);
+                log.debug(">>> Start processing bag parent {} >>>", bagParentVersion1);
+                Path bagDir1 = fedoraExports.getBagDir(bagParentVersion1);
+                Bag bag1 = BagUtil.readBag(bagDir1);
+                FilesXml filesXml1 = new FilesXml(bagDir1.resolve("metadata/files.xml"));
+                removeEmptyFiles(bag1, filesXml1);
+                log.debug("Removed empty files from version 1 bag");
+                filesXml1.write();
+                log.debug("Wrote updated files.xml for version 1 bag");
+                BagUtil.writeBag(bag1);
+                log.debug("Wrote updated version 1 bag");
+                log.debug("<<< Finished processing bag parent {} <<<", bagParentVersion1);
             }
-            // Move staging to output
             fedoraExports.moveTo(outputDir);
         }
         catch (IOException
@@ -97,6 +106,23 @@ public class AvDatasetConverter {
                | SAXException
                | XPathExpressionException e) {
             throw new RuntimeException("Error converting AV dataset", e);
+        }
+    }
+
+    private void removeEmptyFiles(Bag bag, FilesXml filesXml) {
+        try {
+            for (String fileId : filesXml.getFileIds()) {
+                String filePath = filesXml.getFilepathForFileId(fileId);
+                if (Files.size(bag.getRootDir().resolve(filePath)) == 0) {
+                    Files.delete(bag.getRootDir().resolve(filePath));
+                    BagUtil.removePayloadManifestEntriesForPath(bag, filePath);
+                    filesXml.removeFile(fileId);
+                }
+            }
+            BagUtil.updatePayloadManifestChecksumsInTagManifests(bag);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Could not remove empty files", e);
         }
     }
 
@@ -113,7 +139,7 @@ public class AvDatasetConverter {
                 return bagParents.get(1);
             }
         }
-        catch (IOException | UnparsableVersionException | MaliciousPathException | UnsupportedAlgorithmException | InvalidBagitFileFormatException | ParserConfigurationException | SAXException e) {
+        catch (IOException e) {
             throw new RuntimeException("Could not create version 2 bag", e);
         }
     }

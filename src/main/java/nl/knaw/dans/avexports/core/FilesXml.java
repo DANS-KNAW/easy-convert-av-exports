@@ -25,7 +25,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents the files.xml file in an AV export. It provides methods to perform the necessary lookups and changes and to write the changes back to the file.
@@ -44,6 +45,23 @@ public class FilesXml {
     FilesXml(String xml, Path path) throws ParserConfigurationException, IOException, SAXException {
         this.document = XmlUtil.readXmlFromString(xml);
         this.path = path;
+    }
+
+    public List<String> getFileIds() throws XPathExpressionException {
+        NodeList identifierList = XmlUtil.getNodeListByXPath(document, "//dct:identifier/text()");
+        List<String> ids = new ArrayList<>();
+        for (int i = 0; i < identifierList.getLength(); i++) {
+            ids.add(identifierList.item(i).getNodeValue());
+        }
+        return ids;
+    }
+
+    public void removeFile(String id) throws XPathExpressionException {
+        Node fileNode = getElementById(id);
+        if (fileNode == null) {
+            throw new IllegalArgumentException("No file with id " + id + " found in files.xml");
+        }
+        fileNode.getParentNode().removeChild(fileNode);
     }
 
     public String getFilepathForFileId(String id) throws XPathExpressionException {
