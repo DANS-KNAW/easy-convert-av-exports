@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -28,17 +29,16 @@ public class Hasher {
     private final String algorithm;
 
     public String getChecksum() {
-        try {
-            byte[] fileBytes = Files.readAllBytes(file);
+        try (InputStream inputStream = Files.newInputStream(file)) {
             switch (algorithm.toUpperCase()) {
                 case "MD5":
-                    return DigestUtils.md5Hex(fileBytes);
+                    return DigestUtils.md5Hex(inputStream);
                 case "SHA1":
-                    return DigestUtils.sha1Hex(fileBytes);
+                    return DigestUtils.sha1Hex(inputStream);
                 case "SHA256":
-                    return DigestUtils.sha256Hex(fileBytes);
+                    return DigestUtils.sha256Hex(inputStream);
                 case "SHA512":
-                    return DigestUtils.sha512Hex(fileBytes);
+                    return DigestUtils.sha512Hex(inputStream);
                 default:
                     throw new UnsupportedOperationException("Unsupported algorithm: " + algorithm);
             }

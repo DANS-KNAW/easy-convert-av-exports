@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Converts the bag(s) exported for one AV dataset to a bag with AV data.
@@ -42,6 +43,8 @@ public class AvDatasetConverter {
     private final Path springfieldDir;
 
     public void convert() {
+        checkEmpty(outputDir);
+        createDirsIfNeeded(outputDir);
         try {
             for (String datasetId : fedoraExports.getDatasetIds()) {
                 if (sources.hasSpringfieldFiles(datasetId)) {
@@ -83,6 +86,8 @@ public class AvDatasetConverter {
                     // Write the manifests
                     BagUtil.writeBag(bag2);
                     log.debug("Wrote updated bag");
+                    Files.move(bagParentVersion2, outputDir.resolve(bagParentVersion2.getFileName()));
+                    log.debug("Moved version 2 bag to output directory");
                     log.debug("<<< Finished processing bag parent {} <<<", bagParentVersion2);
                 }
 
@@ -97,15 +102,40 @@ public class AvDatasetConverter {
                 log.debug("Wrote updated files.xml for version 1 bag");
                 BagUtil.writeBag(bag1);
                 log.debug("Wrote updated version 1 bag");
+                Files.move(bagParentVersion1, outputDir.resolve(bagParentVersion1.getFileName()));
+                log.debug("Moved version 1 bag to output directory");
                 log.debug("<<< Finished processing bag parent {} <<<", bagParentVersion1);
             }
-            fedoraExports.moveTo(outputDir);
         }
         catch (IOException
                | ParserConfigurationException
                | SAXException
                | XPathExpressionException e) {
             throw new RuntimeException("Error converting AV dataset", e);
+        }
+    }
+
+    private void checkEmpty(Path outputDir) {
+        if (Files.exists(outputDir)) {
+            try {
+                try(Stream<Path> files = Files.list(outputDir)) {
+                    if (files.findAny().isPresent()) {
+                        throw new IllegalStateException("Output directory is not empty");
+                    }
+                }
+            }
+            catch (IOException e) {
+                throw new RuntimeException("Could not check if output directory is empty", e);
+            }
+        }
+    }
+
+    private void createDirsIfNeeded(Path outputDir) {
+        try {
+            Files.createDirectories(outputDir);
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Could not create output directory", e);
         }
     }
 

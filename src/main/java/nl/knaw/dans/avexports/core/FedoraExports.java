@@ -102,6 +102,7 @@ public class FedoraExports {
     }
 
     private String findDatasetId(Path bagParent) {
+        log.debug("Finding dataset id for {}", bagParent);
         checkOneSubdirectory(bagParent);
         Path bagDir = getBagDir(bagParent);
         Path datasetXml = bagDir.resolve("metadata/dataset.xml");
