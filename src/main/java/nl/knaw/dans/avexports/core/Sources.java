@@ -23,7 +23,6 @@ import org.apache.commons.csv.CSVRecord;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -57,7 +56,7 @@ public class Sources {
         return datasetIdToSpringfieldFileIds.get(easyDatasetId);
     }
 
-    public boolean hasSpringfieldFiles(String easyDatasetId) {
+    public boolean hasSpringfieldFilesFor(String easyDatasetId) {
         return datasetIdToSpringfieldFileIds.containsKey(easyDatasetId);
     }
 }

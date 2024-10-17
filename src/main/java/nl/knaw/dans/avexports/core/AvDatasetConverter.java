@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -40,90 +41,148 @@ public class AvDatasetConverter {
     private final Path outputDir;
     private final Sources sources;
     private final Path springfieldDir;
+    private final boolean failFast;
 
     public void convert() {
         checkEmpty(outputDir);
         createDirsIfNeeded(outputDir);
         try {
             for (String datasetId : fedoraExports.getDatasetIds()) {
-                if (sources.hasSpringfieldFiles(datasetId)) {
-                    log.info("Found Springfield files for dataset id {}", datasetId);
-                    Path bagParentVersion2 = createVersion2BagIfNeeded(fedoraExports.getBagParentsForDatasetId(datasetId));
-                    Path bagDir2 = fedoraExports.getBagDir(bagParentVersion2);
-                    Bag bag2 = BagUtil.readBag(bagDir2);
-                    log.debug(">>> Start processing bag parent {} >>>", bagParentVersion2);
-
-                    FilesXml filesXml = new FilesXml(bagDir2.resolve("metadata/files.xml"));
-                    for (String springfieldFileId : sources.getSpringfieldFileIdsFor(datasetId)) {
-                        String springfieldFile = sources.getSpringfieldPathByFileId(springfieldFileId);
-                        log.debug("Found Springfield file {} for file id {}", springfieldFile, springfieldFileId);
-                        String originalFilePathInDataset = filesXml.getFilepathForFileId(springfieldFileId);
-                        log.debug("Original file path in dataset: {}", originalFilePathInDataset);
-                        String newFilePathInDataset = createNewFilepath(originalFilePathInDataset, springfieldFile);
-                        log.debug("New file path in dataset: {}", newFilePathInDataset);
-                        Path avFile = bagDir2.resolve(newFilePathInDataset);
-
-                        // Replace the original file with the AV file
-                        Files.delete(bagDir2.resolve(originalFilePathInDataset));
-                        log.debug("Deleted original file {}", originalFilePathInDataset);
-                        FileUtils.copyFile(springfieldDir.resolve(springfieldFile).toFile(), avFile.toFile());
-                        log.debug("Copied Springfield file to {}", avFile);
-                        filesXml.setFilepathForFileId(springfieldFileId, newFilePathInDataset);
-                        log.debug("Updated files.xml with new file path {}", newFilePathInDataset);
-                        BagUtil.removePayloadManifestEntriesForPath(bag2, originalFilePathInDataset);
-                        BagUtil.updatePayloadManifestsForPath(bag2, newFilePathInDataset);
-                        log.debug("Updated payload and tag manifests for new file path {}", newFilePathInDataset);
-
-                        // Add subtitle files
-                        Subtitles subtitles = new Subtitles(springfieldDir.resolve(springfieldFile));
-                        for (String language : subtitles.getLanguages()) {
-                            Path subtitleFileInSpringfieldDir = subtitles.getSubtitleFile(language);
-                            String newSubtitleFilepath = createSubtitleFilepathFor(newFilePathInDataset, language);
-                            FileUtils.copyFile(subtitleFileInSpringfieldDir.toFile(), bagDir2.resolve(newSubtitleFilepath).toFile());
-                            log.debug("Copied subtitle file to {}", newSubtitleFilepath);
-                            filesXml.addFile(newSubtitleFilepath, filesXml.getAccessibilityForFileId(springfieldFileId));
-                            BagUtil.updatePayloadManifestsForPath(bag2, newSubtitleFilepath);
-                            log.debug("Updated payload and tag manifests for subtitle file {}", newSubtitleFilepath);
-                        }
-                    }
-                    // Remove empty files
-                    removeEmptyFiles(bag2, filesXml);
-                    log.debug("Removed empty files");
-                    filesXml.write();
-                    log.debug("Wrote updated files.xml");
-                    BagUtil.updateTagManifestsForPaths(bag2, "metadata/files.xml", "bag-info.txt");
-                    BagUtil.updatePayloadManifestChecksumsInTagManifests(bag2);
-                    log.debug("Updated tag manifests");
-                    // Write the manifests
-                    BagUtil.writeBag(bag2);
-                    log.debug("Wrote updated bag");
-                    Files.move(bagParentVersion2, outputDir.resolve(bagParentVersion2.getFileName()));
-                    log.debug("Moved version 2 bag to output directory");
-                    log.debug("<<< Finished processing bag parent {} <<<", bagParentVersion2);
-                }
-
-                Path bagParentVersion1 = fedoraExports.getBagParentsForDatasetId(datasetId).get(0);
-                log.debug(">>> Start processing bag parent {} >>>", bagParentVersion1);
-                Path bagDir1 = fedoraExports.getBagDir(bagParentVersion1);
-                Bag bag1 = BagUtil.readBag(bagDir1);
-                FilesXml filesXml1 = new FilesXml(bagDir1.resolve("metadata/files.xml"));
-                removeEmptyFiles(bag1, filesXml1);
-                log.debug("Removed empty files from version 1 bag");
-                filesXml1.write();
-                log.debug("Wrote updated files.xml for version 1 bag");
-                BagUtil.writeBag(bag1);
-                log.debug("Wrote updated version 1 bag");
-                Files.move(bagParentVersion1, outputDir.resolve(bagParentVersion1.getFileName()));
-                log.debug("Moved version 1 bag to output directory");
-                log.debug("<<< Finished processing bag parent {} <<<", bagParentVersion1);
+                processDataset(datasetId);
             }
         }
-        catch (IOException
-               | ParserConfigurationException
-               | SAXException
-               | XPathExpressionException e) {
+        catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException e) {
             throw new RuntimeException("Error converting AV dataset", e);
         }
+    }
+
+    private void processDataset(String datasetId) throws IOException, ParserConfigurationException, SAXException, XPathExpressionException {
+        try {
+            processDatasetInternal(datasetId);
+        }
+        catch (Exception e) {
+            if (failFast) {
+                throw e;
+            }
+            else {
+                log.error("Error processing dataset id {}", datasetId, e);
+            }
+        }
+    }
+
+    private void processDatasetInternal(String datasetId) throws IOException, ParserConfigurationException, SAXException, XPathExpressionException {
+        log.info(">>> Start processing dataset id {} >>>", datasetId);
+        if (sources.hasSpringfieldFilesFor(datasetId)) {
+            processVersion2BagWithSpringfieldFiles(datasetId);
+        }
+        else if (fedoraExports.getBagParentsForDatasetId(datasetId).size() == 2) {
+            processVersion2BagWithoutSpringfieldFiles(datasetId);
+        }
+        else {
+            log.info("No Springfield files and only one bag parent for dataset id {}", datasetId);
+        }
+        processVersion1Bag(datasetId);
+        log.info("<<< Finished processing dataset id {} <<<", datasetId);
+    }
+
+    private void processVersion2BagWithSpringfieldFiles(String datasetId) throws IOException, ParserConfigurationException, SAXException, XPathExpressionException {
+        log.info("Found Springfield files for dataset id {}", datasetId);
+        Path bagParentVersion2 = createVersion2BagIfNeeded(fedoraExports.getBagParentsForDatasetId(datasetId));
+        log.info(">>> Start processing bag parent {} (version 2) (springfield)>>>", bagParentVersion2);
+        Bag bagVersion2 = BagUtil.readBag(fedoraExports.getBagDir(bagParentVersion2));
+        FilesXml filesXml = new FilesXml(bagVersion2.getRootDir().resolve("metadata/files.xml"));
+        List<String> processedSpringfieldFiles = new ArrayList<>();
+        for (String springfieldFileId : sources.getSpringfieldFileIdsFor(datasetId)) {
+            String springfieldFile = sources.getSpringfieldPathByFileId(springfieldFileId);
+            if (processedSpringfieldFiles.contains(springfieldFile)) {
+                log.debug("Springfield file {} already processed", springfieldFile);
+                continue;
+            }
+            processSpringfieldFile(bagVersion2, filesXml, springfieldFileId, springfieldFile);
+            processedSpringfieldFiles.add(springfieldFile);
+        }
+        removeEmptyFiles(bagVersion2, filesXml);
+        log.debug("Removed empty files");
+        filesXml.write();
+        log.debug("Wrote updated files.xml");
+        BagUtil.updateTagManifestsForPaths(bagVersion2, "metadata/files.xml", "bag-info.txt");
+        BagUtil.updatePayloadManifestChecksumsInTagManifests(bagVersion2);
+        log.debug("Updated tag manifests");
+        BagUtil.writeBag(bagVersion2);
+        log.debug("Wrote updated bag");
+        Files.move(bagParentVersion2, outputDir.resolve(bagParentVersion2.getFileName()));
+        log.debug("Moved version 2 bag to output directory");
+        log.info("<<< Finished processing bag parent {} (version 2) (springfield) <<<", bagParentVersion2);
+    }
+
+    private void processSpringfieldFile(Bag bag, FilesXml filesXml, String springfieldFileId, String springfieldFile) throws IOException, XPathExpressionException {
+        log.debug("Found Springfield file {} for file id {}", springfieldFile, springfieldFileId);
+        String originalFilePathInDataset = filesXml.getFilepathForFileId(springfieldFileId);
+        log.debug("Original file path in dataset: {}", originalFilePathInDataset);
+        String newFilePathInDataset = createNewFilepath(originalFilePathInDataset, springfieldFile);
+        log.debug("New file path in dataset: {}", newFilePathInDataset);
+        Path newAvFile = bag.getRootDir().resolve(newFilePathInDataset);
+        Path pseudoFileForAvFile = bag.getRootDir().resolve(originalFilePathInDataset);
+        Files.delete(pseudoFileForAvFile);
+        log.debug("Deleted pseudo file {}", originalFilePathInDataset);
+        FileUtils.copyFile(springfieldDir.resolve(springfieldFile).toFile(), newAvFile.toFile());
+        log.debug("Copied Springfield file to {}", newAvFile);
+        filesXml.setFilepathForFileId(springfieldFileId, newFilePathInDataset);
+        log.debug("Updated files.xml with new file path {}", newFilePathInDataset);
+        BagUtil.removePayloadManifestEntriesForPath(bag, originalFilePathInDataset);
+        BagUtil.updatePayloadManifestsForPath(bag, newFilePathInDataset);
+        log.debug("Updated payload and tag manifests for new file path {}", newFilePathInDataset);
+
+        addSubtitleFiles(bag, filesXml, springfieldFile, newFilePathInDataset, springfieldFileId);
+    }
+
+    private void addSubtitleFiles(Bag bag2, FilesXml filesXml, String springfieldFile, String newFilePathInDataset, String springfieldFileId) throws IOException,
+        XPathExpressionException {
+        Subtitles subtitles = new Subtitles(springfieldDir.resolve(springfieldFile));
+        for (String language : subtitles.getLanguages()) {
+            log.debug("Processing subtitle file for language {}", language);
+            Path subtitleFileInSpringfieldDir = subtitles.getSubtitleFile(language);
+            String newSubtitleFilepath = createSubtitleFilepathFor(newFilePathInDataset, language);
+            FileUtils.copyFile(subtitleFileInSpringfieldDir.toFile(), bag2.getRootDir().resolve(newSubtitleFilepath).toFile());
+            log.debug("Copied subtitle file to {}", newSubtitleFilepath);
+            filesXml.addFile(newSubtitleFilepath, filesXml.getAccessibilityForFileId(springfieldFileId));
+            BagUtil.updatePayloadManifestsForPath(bag2, newSubtitleFilepath);
+            log.debug("Updated payload and tag manifests for subtitle file {}", newSubtitleFilepath);
+        }
+    }
+
+    private void processVersion2BagWithoutSpringfieldFiles(String datasetId) throws IOException, ParserConfigurationException, SAXException, XPathExpressionException {
+        Path bagParentVersion2 = fedoraExports.getBagParentsForDatasetId(datasetId).get(1);
+        log.info(">>> Start processing bag parent {} (version 2) (no springfield) >>>", bagParentVersion2);
+        Path bagDir2 = fedoraExports.getBagDir(bagParentVersion2);
+        Bag bag2 = BagUtil.readBag(bagDir2);
+        FilesXml filesXml = new FilesXml(bagDir2.resolve("metadata/files.xml"));
+        removeEmptyFiles(bag2, filesXml);
+        log.debug("Removed empty files from version 2 bag");
+        filesXml.write();
+        log.debug("Wrote updated files.xml for version 2 bag");
+        BagUtil.writeBag(bag2);
+        log.debug("Wrote updated version 2 bag");
+        Files.move(bagParentVersion2, outputDir.resolve(bagParentVersion2.getFileName()));
+        log.debug("Moved version 2 bag to output directory");
+        log.info("<<< Finished processing bag parent {} (version 2) (no springfield) <<<", bagParentVersion2);
+    }
+
+    private void processVersion1Bag(String datasetId) throws IOException, ParserConfigurationException, SAXException, XPathExpressionException {
+        Path bagParentVersion1 = fedoraExports.getBagParentsForDatasetId(datasetId).get(0);
+        log.info(">>> Start processing bag parent {} (version 1) >>>", bagParentVersion1);
+        Path bagDir1 = fedoraExports.getBagDir(bagParentVersion1);
+        Bag bag1 = BagUtil.readBag(bagDir1);
+        FilesXml filesXml1 = new FilesXml(bagDir1.resolve("metadata/files.xml"));
+        removeEmptyFiles(bag1, filesXml1);
+        log.debug("Removed empty files from version 1 bag");
+        filesXml1.write();
+        log.debug("Wrote updated files.xml for version 1 bag");
+        BagUtil.writeBag(bag1);
+        log.debug("Wrote updated version 1 bag");
+        Files.move(bagParentVersion1, outputDir.resolve(bagParentVersion1.getFileName()));
+        log.debug("Moved version 1 bag to output directory");
+        log.info("<<< Finished processing bag parent {} (version 1) <<<", bagParentVersion1);
     }
 
     private void checkEmpty(Path outputDir) {
@@ -174,6 +233,7 @@ public class AvDatasetConverter {
                 Path version2BagDir = fedoraExports.createNewBagPath();
                 FileUtils.copyDirectory(version1BagDir.toFile(), version2BagDir.toFile());
                 BagUtil.updateBagVersion(version2BagDir, version1BagDir);
+                log.info("Created version 2 bag parent {} from version 1 bag parent {}", version2BagDir.getParent().getFileName(), version1BagDir.getParent().getFileName());
                 return version2BagDir.getParent();
             }
             else {
