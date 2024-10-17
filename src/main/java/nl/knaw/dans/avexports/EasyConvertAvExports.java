@@ -53,6 +53,10 @@ public class EasyConvertAvExports extends AbstractCommandLineAppJava8<EasyConver
             description = "Move the input to the staging directory instead of copying it")
     private boolean move;
 
+    @Option(names = { "-f", "--fail-fast" },
+            description = "Fail run on first error")
+    private boolean failFast;
+
     private Path stagingDir;
 
     private final AvDatasetConverter.AvDatasetConverterBuilder builder = AvDatasetConverter.builder();
@@ -91,6 +95,7 @@ public class EasyConvertAvExports extends AbstractCommandLineAppJava8<EasyConver
             builder
                 .fedoraExports(fedoraExports)
                 .outputDir(outputDir)
+                .failFast(failFast)
                 .build()
                 .convert();
             return 0;
