@@ -16,6 +16,7 @@
 package nl.knaw.dans.avexports.core;
 
 import org.junit.jupiter.api.Test;
+import org.w3c.dom.Document;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -95,10 +96,10 @@ public class FilesXmlTest extends AbstractTestWithTestDir {
     @Test
     public void getFileIds_should_return_the_file_ids() throws Exception {
         String xml = "<files " + namespaceBindings + ">"
-            + " <file>"
+            + " <file filepath=\"path/to/file1\">"
             + "  <dct:identifier>easy-file:1</dct:identifier>"
             + " </file>"
-            + " <file>"
+            + " <file filepath=\"path/to-file:2\">"
             + "  <dct:identifier>easy-file:2</dct:identifier>"
             + " </file>"
             + "</files>";
@@ -117,10 +118,10 @@ public class FilesXmlTest extends AbstractTestWithTestDir {
     @Test
     public void removeFile_should_remove_the_file() throws Exception {
         String xml = "<files " + namespaceBindings + ">"
-            + " <file>"
+            + " <file filepath=\"path/to/file1\">"
             + "  <dct:identifier>easy-file:1</dct:identifier>"
             + " </file>"
-            + " <file>"
+            + " <file filepath=\"path/to-file:2\">"
             + "  <dct:identifier>easy-file:2</dct:identifier>"
             + " </file>"
             + "</files>";
@@ -138,4 +139,55 @@ public class FilesXmlTest extends AbstractTestWithTestDir {
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("No file with id easy-file:1 found in files.xml");
     }
+
+    @Test
+    public void getAccessibilityForFileId_should_return_the_accessibility() throws Exception {
+        String xml = "<files " + namespaceBindings + ">"
+            + " <file filepath=\"path/to/file\">"
+            + "  <accessibleToRights>ANONYMOUS</accessibleToRights>"
+            + "  <dct:identifier>easy-file:1</dct:identifier>"
+            + " </file>"
+            + "</files>";
+
+        FilesXml filesXml = new FilesXml(xml, null);
+        assertThat(filesXml.getAccessibilityForFileId("easy-file:1")).isEqualTo("ANONYMOUS");
+    }
+
+    @Test
+    public void getAccessibilityForFileId_should_throw_exception_when_no_file_found() throws Exception {
+        String xml = "<files " + namespaceBindings + "></files>";
+        FilesXml filesXml = new FilesXml(xml, null);
+        assertThatThrownBy(() -> filesXml.getAccessibilityForFileId("easy-file:1"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("No file with id easy-file:1 found in files.xml");
+    }
+
+    @Test
+    public void getAccessibilityForFileId_should_throw_when_no_accessibleToRights_found() throws Exception {
+        String xml = "<files " + namespaceBindings + ">"
+            + " <file filepath=\"path/to/file\">"
+            + "  <dct:identifier>easy-file:1</dct:identifier>"
+            + " </file>"
+            + "</files>";
+
+        FilesXml filesXml = new FilesXml(xml, null);
+        assertThatThrownBy(() -> filesXml.getAccessibilityForFileId("easy-file:1"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("No accessibleToRights element found for file with id easy-file:1");
+    }
+
+    @Test
+    public void addFile_should_add_a_file() throws Exception {
+        String xml = "<files " + namespaceBindings + "></files>";
+        FilesXml filesXml = new FilesXml(xml, testDir.resolve("files.xml"));
+        filesXml.addFile("path/to/file", "ANONYMOUS");
+        filesXml.write();
+
+        Document document = XmlUtil.readXml(testDir.resolve("files.xml"));
+
+        assertThat(document.getElementsByTagName("file").getLength()).isEqualTo(1);
+        assertThat(document.getElementsByTagName("file").item(0).getAttributes().getNamedItem("filepath").getNodeValue())
+            .isEqualTo("path/to/file");
+    }
+
 }

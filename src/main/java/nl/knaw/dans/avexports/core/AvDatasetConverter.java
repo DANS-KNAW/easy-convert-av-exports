@@ -18,7 +18,6 @@ package nl.knaw.dans.avexports.core;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import nl.knaw.dans.bagit.domain.Bag;
-import nl.knaw.dans.bagit.domain.Manifest;
 import org.apache.commons.io.FileUtils;
 import org.xml.sax.SAXException;
 
@@ -60,7 +59,7 @@ public class AvDatasetConverter {
                         log.debug("Found Springfield file {} for file id {}", springfieldFile, springfieldFileId);
                         String originalFilePathInDataset = filesXml.getFilepathForFileId(springfieldFileId);
                         log.debug("Original file path in dataset: {}", originalFilePathInDataset);
-                        String newFilePathInDataset = createNewFilePath(originalFilePathInDataset, springfieldFile);
+                        String newFilePathInDataset = createNewFilepath(originalFilePathInDataset, springfieldFile);
                         log.debug("New file path in dataset: {}", newFilePathInDataset);
                         Path avFile = bagDir2.resolve(newFilePathInDataset);
 
@@ -74,6 +73,18 @@ public class AvDatasetConverter {
                         BagUtil.removePayloadManifestEntriesForPath(bag2, originalFilePathInDataset);
                         BagUtil.updatePayloadManifestsForPath(bag2, newFilePathInDataset);
                         log.debug("Updated payload and tag manifests for new file path {}", newFilePathInDataset);
+
+                        // Add subtitle files
+                        Subtitles subtitles = new Subtitles(springfieldDir.resolve(springfieldFile));
+                        for (String language : subtitles.getLanguages()) {
+                            Path subtitleFileInSpringfieldDir = subtitles.getSubtitleFile(language);
+                            String newSubtitleFilepath = createSubtitleFilepathFor(newFilePathInDataset, language);
+                            FileUtils.copyFile(subtitleFileInSpringfieldDir.toFile(), bagDir2.resolve(newSubtitleFilepath).toFile());
+                            log.debug("Copied subtitle file to {}", newSubtitleFilepath);
+                            filesXml.addFile(newSubtitleFilepath, filesXml.getAccessibilityForFileId(springfieldFileId));
+                            BagUtil.updatePayloadManifestsForPath(bag2, newSubtitleFilepath);
+                            log.debug("Updated payload and tag manifests for subtitle file {}", newSubtitleFilepath);
+                        }
                     }
                     // Remove empty files
                     removeEmptyFiles(bag2, filesXml);
@@ -118,7 +129,7 @@ public class AvDatasetConverter {
     private void checkEmpty(Path outputDir) {
         if (Files.exists(outputDir)) {
             try {
-                try(Stream<Path> files = Files.list(outputDir)) {
+                try (Stream<Path> files = Files.list(outputDir)) {
                     if (files.findAny().isPresent()) {
                         throw new IllegalStateException("Output directory is not empty");
                     }
@@ -181,11 +192,23 @@ public class AvDatasetConverter {
      * @param springfieldFile       the path to file in the Springfield directory
      * @return the new file path
      */
-    private String createNewFilePath(String originalPathInDataset, String springfieldFile) {
+    private String createNewFilepath(String originalPathInDataset, String springfieldFile) {
         Path po = Paths.get(originalPathInDataset);
         Path ps = Paths.get(springfieldFile);
         String springFieldExtension = ps.getFileName().toString().substring(ps.getFileName().toString().lastIndexOf('.'));
-        String newFileName = po.getFileName().toString().substring(0, po.getFileName().toString().lastIndexOf('.')) + springFieldExtension;
+        String newFileName = replaceExtension(po.getFileName().toString(), springFieldExtension);
         return po.getParent().resolve(newFileName).toString();
+    }
+
+    private String createSubtitleFilepathFor(String avFileLocalPath, String language) {
+        return stripExtension(avFileLocalPath) + "." + language + ".vtt";
+    }
+
+    private String stripExtension(String fileName) {
+        return fileName.substring(0, fileName.lastIndexOf('.'));
+    }
+
+    private String replaceExtension(String fileName, String newExtension) {
+        return fileName.substring(0, fileName.lastIndexOf('.')) + newExtension;
     }
 }

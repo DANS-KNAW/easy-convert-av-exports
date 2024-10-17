@@ -85,6 +85,32 @@ public class FilesXml {
         }
     }
 
+    public String getAccessibilityForFileId(String id) throws XPathExpressionException {
+        Node fileNode = getElementById(id);
+        if (fileNode == null) {
+            throw new IllegalArgumentException("No file with id " + id + " found in files.xml");
+        }
+        for (int i = 0; i < fileNode.getChildNodes().getLength(); i++) {
+            Node childNode = fileNode.getChildNodes().item(i);
+            if ("accessibleToRights".equals(childNode.getNodeName())) {
+                return childNode.getTextContent();
+            }
+        }
+        throw new IllegalStateException("No accessibleToRights element found for file with id " + id);
+    }
+
+    public void addFile(String filepath, String accessibility) {
+        Node filesNode = document.getDocumentElement();
+        Node fileNode = document.createElement("file");
+        // Add filepath attribute to fileNode with value filepath
+        fileNode.getAttributes().setNamedItem(document.createAttribute("filepath"));
+        fileNode.getAttributes().getNamedItem("filepath").setNodeValue(filepath);
+        Node accessibilityNode = document.createElement("accessibleToRights");
+        accessibilityNode.setTextContent(accessibility);
+        fileNode.appendChild(accessibilityNode);
+        filesNode.appendChild(fileNode);
+    }
+
     private Node getElementById(String id) throws XPathExpressionException {
         // Java's XPath implementation does not seem to support default namespaces, so we have to access the DOM directly to get at the file element.
         NodeList nodeList = document.getElementsByTagName("file");
