@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="None" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>easy-convert-av-exports</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Manual";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> easy-convert-av-exports
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href=".">Manual</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#synopsis">SYNOPSIS</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#description">DESCRIPTION</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#processing">Processing</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#installation-and-configuration">INSTALLATION AND CONFIGURATION</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#development">Development</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#building-from-source">BUILDING FROM SOURCE</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">easy-convert-av-exports</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" alt="Docs"></a> &raquo;</li><li>Manual</li>
+    <li class="wy-breadcrumbs-aside">
+        <a href="https://github.com/DANS-KNAW/easy-convert-av-exports/edit/master/docs/index.md"> Edit on DANS-KNAW/easy-convert-av-exports</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="easy-convert-av-exports">easy-convert-av-exports<a class="headerlink" href="#easy-convert-av-exports" title="Permanent link">&para;</a></h1>
+<h2 id="synopsis">SYNOPSIS<a class="headerlink" href="#synopsis" title="Permanent link">&para;</a></h2>
+<pre class="codehilite"><code>easy-convert-av-exports [--move] &lt;input-dir&gt; &lt;output-dir&gt;
+</code></pre>
+
+<h2 id="description">DESCRIPTION<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
+<p>This project is a rewrite of <a href="https://github.com/DANS-KNAW/easy-preprocess-av-bag">easy-preprocess-av-bag</a>. It is a command line tool that preprocesses bags exported by <a href="https://github.com/DANS-KNAW/easy-fedora-to-bag">easy-fedora-to-bag</a> which contain AV
+materials. The resulting bags are then further processed to deposits by <a href="https://github.com/DANS-KNAW/easy-convert-bag-to-deposit">easy-convert-bag-to-deposit</a> and ingested into a Data Station.</p>
+<h3 id="processing">Processing<a class="headerlink" href="#processing" title="Permanent link">&para;</a></h3>
+<p>The input is a directory containing bags exported from EASY by <code>easy-fedora-to-bag</code>. Per dataset one or two bags are exported, depending on whether there
+was a folder called <code>original</code> in the dataset. The <code>orginal</code> folder contains the original files of the dataset as deposited by the user. </p>
+<p>This tool completes the second version with the streaming copies of the audio and video files and subtitles, if present. The pseudo-files
+(empty files that refer to files in the dark archive) are removed. It is envisioned that the files these refer to will be added to the dataset in the Data Station
+in a later stage.</p>
+<pre><code class="language-yaml">sources:
+  springfieldDir: # ...location of directory containing files from Springfield (streaming copies)
+  path: # ...location of a CSV file detailing where to find the files  
+
+stagingDir: # ...location of directory where the files are staged
+
+</code></pre>
+<p>The CSV file should have the following format:</p>
+<table>
+<thead>
+<tr>
+<th>easy_file_id</th>
+<th>dataset_id</th>
+<th>path_in_springfield_dir</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>easy-file:12345</td>
+<td>easy-dataset:67890</td>
+<td>path/to/file2</td>
+</tr>
+<tr>
+<td>easy-file:23456</td>
+<td>easy-dataset:67890</td>
+<td>path/to/file4</td>
+</tr>
+</tbody>
+</table>
+<h2 id="installation-and-configuration">INSTALLATION AND CONFIGURATION<a class="headerlink" href="#installation-and-configuration" title="Permanent link">&para;</a></h2>
+<p>Currently, this project is built as an RPM package for RHEL7/CentOS7 and later. The RPM will install the binaries to
+<code>/opt/dans.knaw.nl/easy-convert-av-exports</code> and the configuration files to <code>/etc/opt/dans.knaw.nl/easy-convert-av-exports</code>.</p>
+<h3 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h3>
+<p>When running the program with the <code>start.sh</code> script, you must set <code>JAVA_HOME</code> to point to a JDK 8 installation. However, when building the project with Maven, 
+you must set <code>JAVA_HOME</code> to point to a JDK 17 installation.</p>
+<h2 id="building-from-source">BUILDING FROM SOURCE<a class="headerlink" href="#building-from-source" title="Permanent link">&para;</a></h2>
+<p>Prerequisites:</p>
+<ul>
+<li>Java 8</li>
+<li>Maven 3.3.3 or higher</li>
+<li>RPM</li>
+</ul>
+<p>Steps:</p>
+<pre class="codehilite"><code>git clone https://github.com/DANS-KNAW/easy-convert-av-exports.git
+cd easy-convert-av-exports 
+mvn clean install
+</code></pre>
+
+<p>If the <code>rpm</code> executable is found at <code>/usr/local/bin/rpm</code>, the build profile that includes the RPM
+packaging will be activated. If <code>rpm</code> is available, but at a different path, then activate it by using
+Maven's <code>-P</code> switch: <code>mvn -Pprm install</code>.</p>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script>var base_url = '.';</script>
+    <script src="js/theme_extra.js" defer></script>
+    <script src="js/theme.js" defer></script>
+      <script src="search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.3.0
+Build Date UTC : 2024-10-21 14:34:06.008798+00:00
+-->
