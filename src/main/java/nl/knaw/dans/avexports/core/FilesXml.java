@@ -85,6 +85,22 @@ public class FilesXml {
         }
     }
 
+    public void deleteFileElementForFilepath(String path) {
+        try {
+            NodeList nodeList = document.getElementsByTagName("file");
+            for (int i = 0; i < nodeList.getLength(); i++) {
+                Node node = nodeList.item(i);
+                if (node.getAttributes().getNamedItem("filepath").getNodeValue().equals(path)) {
+                    node.getParentNode().removeChild(node);
+                    return;
+                }
+            }
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public String getAccessibilityForFileId(String id) throws XPathExpressionException {
         Node fileNode = getElementById(id);
         if (fileNode == null) {

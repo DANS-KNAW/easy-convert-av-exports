@@ -127,6 +127,11 @@ public class AvDatasetConverter {
         log.debug("Deleted pseudo file {}", originalFilePathInDataset);
         FileUtils.copyFile(springfieldDir.resolve(springfieldFile).toFile(), newAvFile.toFile());
         log.debug("Copied Springfield file to {}", newAvFile);
+        if (!originalFilePathInDataset.equals(newFilePathInDataset)) {
+            // If we have overwritten an existing OTHER file, we need to remove the old entry, otherwise we will have two entries for the same file
+            filesXml.deleteFileElementForFilepath(
+                newFilePathInDataset);
+        }
         filesXml.setFilepathForFileId(springfieldFileId, newFilePathInDataset);
         log.debug("Updated files.xml with new file path {}", newFilePathInDataset);
         BagUtil.removePayloadManifestEntriesForPath(bag, originalFilePathInDataset);

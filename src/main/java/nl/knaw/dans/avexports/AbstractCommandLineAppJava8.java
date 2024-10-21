@@ -17,6 +17,7 @@ package nl.knaw.dans.avexports;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -68,12 +69,21 @@ public abstract class AbstractCommandLineAppJava8<C extends Configuration> imple
         configureCommandLine(commandLine, config);
         commandLine.addSubcommand(new GenerateCompletion());
         try {
-            System.exit(commandLine.execute(args));
+            commandLine.execute(args);
         }
-        catch (Exception e) {
+        catch (Throwable e) {
             log.error("Error running command", e);
+            flushAndStopLoggerContext();
             System.exit(1);
         }
+        flushAndStopLoggerContext();
+        System.exit(0);
+    }
+
+    private void flushAndStopLoggerContext() {
+        // Otherwise System.exit may cut off the log messages
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
     }
 
     public C loadConfiguration(File configFile) throws ConfigurationException, IOException {

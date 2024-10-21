@@ -19,14 +19,13 @@ import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 
 import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class FilesXmlTest extends AbstractTestWithTestDir {
     private static final String namespaceBindings =
-             "xmlns=\"http://easy.dans.knaw.nl/schemas/bag/metadata/files/\" xmlns:dct=\"http://purl.org/dc/terms/\"";
+        "xmlns=\"http://easy.dans.knaw.nl/schemas/bag/metadata/files/\" xmlns:dct=\"http://purl.org/dc/terms/\"";
 
     @Test
     public void getFilepathForFileId_should_return_the_filepath() throws Exception {
@@ -188,6 +187,34 @@ public class FilesXmlTest extends AbstractTestWithTestDir {
         assertThat(document.getElementsByTagName("file").getLength()).isEqualTo(1);
         assertThat(document.getElementsByTagName("file").item(0).getAttributes().getNamedItem("filepath").getNodeValue())
             .isEqualTo("path/to/file");
+    }
+
+    @Test
+    public void deleteFileElementForFilepath_should_delete_the_file() throws Exception {
+        String xml = "<files " + namespaceBindings + ">"
+            + " <file filepath=\"path/to/file1\">"
+            + "  <dct:identifier>easy-file:1</dct:identifier>"
+            + " </file>"
+            + " <file filepath=\"path/to-file:2\">"
+            + "  <dct:identifier>easy-file:2</dct:identifier>"
+            + " </file>"
+            + "</files>";
+
+        FilesXml filesXml = new FilesXml(xml, null);
+        filesXml.deleteFileElementForFilepath("path/to/file1");
+        assertThat(filesXml.getFileIds()).containsExactly("easy-file:2");
+    }
+
+    @Test
+    public void deleteFileElementForFilePath_should_ignore_when_no_file_found() throws Exception {
+        String xml = "<files " + namespaceBindings + ">"
+            + " <file filepath=\"path/to-file:2\">"
+            + "  <dct:identifier>easy-file:2</dct:identifier>"
+            + " </file>"
+            + "</files>";
+        FilesXml filesXml = new FilesXml(xml, null);
+        filesXml.deleteFileElementForFilepath("path/to/file1");
+        assertThat(filesXml.getFileIds()).containsExactly("easy-file:2");
     }
 
 }
